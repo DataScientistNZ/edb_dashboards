@@ -1,0 +1,413 @@
+---
+title: "EDB Network Utilisation"
+format: 
+  dashboard:
+    scrolling: true 
+    # theme: lumen
+    # theme: flatly
+    nav-buttons:
+      - text: Home
+        icon: list
+        href: https://datascientistnz.github.io/
+      - text: Code
+        icon: github
+        href: https://github.com/DataScientistNZ/
+
+
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, echo=F}
+
+# round all numeric values to n digits (n=3 by default)
+# we do so to allow a nice display
+# makes a copy of the input data by default (use copy=F if undesired)
+round_all_numeric_values <- function(dt, digits=3, copy=T) {
+  if (copy) dt <- data.table(dt)
+  for (nm in names(dt)) {
+    if (is.numeric(dt[[nm]])) {
+      dt[, (nm) := round(get(nm), digits)]
+    }
+  }
+  dt
+}
+
+# custom made display of datatable
+# displaying a copy of the table (copy made in the rounding function)
+my_datatable <- function(dt, ..., digits=3) {
+  DT::datatable(round_all_numeric_values(dt, digits=digits), ..., 
+                extensions = 'Buttons', options = list(
+                  dom = 'Bifrtp', buttons = c('copy', 'csv')))
+}
+
+```
+
+# Introduction
+
+## documentation content
+
+<h5>EDB Network Utilisation</h5>
+
+This dashboard aims to facilitate the monitoring of the network utilisation of Electricity Distribution Businesses (EDBs).
+The dataset used in this dashboard is the one published by the Commerce Commission that involves ID data gathered from Electricity Distribution Businesses. The raw data can be found [here](https://comcom.govt.nz/regulated-industries/electricity-lines/electricity-distributor-performance-and-data/information-disclosed-by-electricity-distributors).
+
+More specifically, it uses data from the schedule "S12b.Capacity Forecast". The following metrics are of interest to monitor the network utilisation:
+
+* Current Peak Load (MVA)
+* Installed Firm Capacity (MVA)
+
+The retained simplified methodology to quantify the overall network utilisation by EDBs is to aggregate the Current Peak Load of individual substations from an EDB, and to compare it to the aggregated Installed Firm Capacity. 
+
+It gives a reasonable picture of the overall network utilisation of EDBs only if both information have been filled accurately.
+
+
+```{r, echo=F}
+
+# load resources and set common variables
+library(data.table)
+source(file.path(here::here(), "R", "00_echarts.R"))
+options(scipen=999)
+
+# load prepared data
+dt_pc <- fread(file.path(here::here(), "data", "utilisation_data.csv"))
+
+# make a clean copy only using substations with both peak demand and capacity info
+dt_pc_clean <- data.table(dt_pc[!(is.na(peak) | peak == 0 | capacity == 0 | is.na(capacity))])
+
+# create datasets with aggregated substations (keep clean filter)
+dt_agg <- dt_pc[, .(peak = sum(peak, na.rm = T), capacity = sum(capacity, na.rm = T)), 
+                by=c("edb", "disc_yr", "status")]
+dt_agg[, "utilisation" := peak / capacity]
+
+dt_agg_clean <- dt_pc_clean[, .(peak = sum(peak, na.rm = T), capacity = sum(capacity, na.rm = T)), 
+                            by=c("edb", "disc_yr", "status")]
+dt_agg_clean[, "utilisation" := peak / capacity]
+
+```
+
+
+# Data Issues
+
+## text
+<h5>Data Issues</h5>
+Two metrics, reported by all EDBs for all substations, are involved in this study:
+
+* Current Peak Load (MVA)
+* Installed Firm Capacity (MVA)
+
+While it appears that EDBs are listing their substations appropriately, it is common for some EDBs not to share the Installed Firm Capacity (either not filled or zero). While less common, it also occurs for the current peak load not to be filled.
+
+This dashboard aims to monitor the overall network utilisation. To do so, the retained simplified methodology is to aggregate the Current Peak Load of individual substations from an EDB, and to compare it to the aggregated Installed Firm Capacity. It gives a reasonable picture of the overall network utilisation of EDBs only if both information have been filled accurately. If one of them is missing, typically the capacity, then the network might appear over-utilised because the peak load of some substations is matched with a zero Capacity.
+
+To account for these data issues, results in this dashboard are systematically presented twice:
+
+* Once with the data cleaned before aggregation to only include observations of substations for which both the Capacity and the Peak Load were known.
+* Once with all the raw data being aggregated as-is (i.e. no filtering).
+
+One might want to monitor the quality of the obtained signal once the described filtering took place. The below chart aims to achieve so, by building a "missing capacity index". 
+The Capacity is typically the missing information, so it is possible to monitor for all EDBs the Peak Load of all substations for which the Capacity is missing, divided by the total Peak Load of all substations. A Ratio of 0.30 indicates that 30% of the overall Peak Load is associated to a substation for which there was no information on Capacity. The lower this missing capacity index, the better the Capacity information has been filled by the involved EDB.
+
+
+## result - all
+
+```{r, echo=F}
+
+missing_peak <- dt_pc[(capacity == 0 | is.na(capacity)), 
+                     .(missing_peak = sum(peak, na.rm=T)), by=c("edb", "disc_yr", "status")]
+nonmissing_peak <- dt_pc[!(is.na(peak) | peak == 0 | capacity == 0 | is.na(capacity)), 
+                        .(nonmissing_peak = sum(peak, na.rm=T)), by=c("edb", "disc_yr", "status")]
+dt_m <- merge(nonmissing_peak, missing_peak, all=T)[is.na(missing_peak), missing_peak := 0][
+  is.na(nonmissing_peak), nonmissing_peak := 0]
+dt_m[, missing_idx := round(missing_peak / (missing_peak + nonmissing_peak), 4)]
+# dt_m <- merge(dt_m, 
+#               get_edb_status()[edb == "Eastland Network", edb := "Firstlight Network"][],
+#               by="edb") 
+
+field <- "missing_idx"
+my_status <- "NonExempt"
+eplot_line(dt_m[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  # e_y_axis(formatter = e_axis_formatter("percent", digits = 0)) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ")")) 
+
+```
+
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+eplot_line(dt_m[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ")"))
+
+
+```
+
+
+# Peak Load
+
+## text into model
+<h5>Peak Load </h5>
+This page presents the aggregated Peak Load ("peak") for all EDBs across the observed years.
+
+First, with the curated dataset (see methodology described in the "Data Issues" section), then using all the data without any filtering.  
+
+## result 1
+
+```{r, echo=F}
+
+field <- "peak"
+my_status <- "NonExempt"
+eplot_line(dt_agg_clean[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - curated"))
+
+```
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+eplot_line(dt_agg_clean[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - curated"))
+
+```
+
+
+## result 2
+
+```{r, echo=F}
+
+my_status <- "NonExempt"
+eplot_line(dt_agg[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - raw data"))
+
+```
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+eplot_line(dt_agg[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - raw data"))
+
+
+```
+
+
+# Capacity
+
+## text into model
+<h5>Installed Firm Capacity</h5>
+This page presents the aggregated Installed Firm Capacity ("capacity") for all EDBs across the observed years.
+
+First, with the curated dataset (see methodology described in the "Data Issues" section), then using all the data without any filtering.  
+
+## result 1
+
+```{r, echo=F}
+
+field <- "capacity"
+my_status <- "NonExempt"
+eplot_line(dt_agg_clean[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - curated"))
+
+```
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+eplot_line(dt_agg_clean[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - curated"))
+
+```
+
+
+## result 2
+
+```{r, echo=F}
+
+my_status <- "NonExempt"
+eplot_line(dt_agg[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - raw data"))
+
+```
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+eplot_line(dt_agg[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - raw data"))
+
+
+```
+
+
+# Utilisation
+
+## text into model
+<h5>Utilisation</h5>
+This page presents the aggregated utilisation for all EDBs across the observed years.
+It is defined as a ratio of:
+
+* the sum of the Current Peak Load for all substations, divided by
+* the sum of the Installed Firm Capacity
+
+The first charts present results with the curated dataset (see methodology described in the "Data Issues" section), then the same results are presented using all the data without any filtering.  
+
+## result 1
+
+```{r, echo=F}
+
+field <- "utilisation"
+my_status <- "NonExempt"
+eplot_line(dt_agg_clean[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - curated"))
+
+```
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+eplot_line(dt_agg_clean[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - curated"))
+
+```
+
+
+## result 2
+
+```{r, echo=F}
+
+my_status <- "NonExempt"
+eplot_line(dt_agg[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - raw data"))
+
+```
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+eplot_line(dt_agg[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - raw data"))
+
+
+```
+
+
+# Data
+
+## a1
+<h5>Data</h5>
+This page presents the involved datasets.
+You can navigate them, or copy and/or download by using the buttons at the top. 
+
+## a2 {.tabset}
+
+```{r, echo=F, results='asis'}
+#| title: All substations
+cat("**All substations raw dataset**\n")
+my_datatable(dt_pc)
+```
+
+```{r, echo=F, results='asis'}
+#| title: Aggregated curated
+cat("**Aggregated curated dataset**\n\n")
+my_datatable(dt_agg_clean)
+
+```
+
+```{r, echo=F, results='asis'}
+#| title: Aggregated raw
+cat("**Aggregated raw dataset**\n\n")
+my_datatable(dt_agg)
+```
+
+```{r, echo=F, results='asis'}
+#| title: Missing capacity
+cat("**Missing capacity analysis dataset**\n\n")
+my_datatable(dt_m)
+```
+
+
