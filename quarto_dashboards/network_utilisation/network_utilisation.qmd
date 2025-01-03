@@ -8,10 +8,10 @@ format:
     nav-buttons:
       - text: Home
         icon: list
-        href: https://datascientistnz.github.io/
+        href: https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation
       - text: Code
         icon: github
-        href: https://github.com/DataScientistNZ/
+        href: https://github.com/DataScientistNZ/edb_dashboards
 
 
 editor: 
