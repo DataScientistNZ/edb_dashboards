@@ -67,7 +67,7 @@ eplot_line <- function(dt, x, y, groupby=NULL, x_lab=NULL, y_lab=NULL, decimals=
     p <- p |> group_by(across(all_of(groupby)))
   }
   p <- p |> e_charts_(x) |>
-    e_line_(y, symbolSize = 10) |>
+    e_line_(y, symbolSize = 10, emphasis = list(focus = "series")) |>
     e_tooltip(trigger = "axis") |>
     e_x_axis(name = x_lab, nameLocation = "middle", nameGap = 30, axisLabel = label_hack) |>
     e_y_axis(name = y_lab, nameLocation = "middle", nameGap = 30) |> 

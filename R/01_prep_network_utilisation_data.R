@@ -11,9 +11,30 @@ dt <- dt[disc_yr >= 2013]
 # below is arguably wrong
 dt <- dt[disc_yr == obs_yr | disc_yr == fcast_yr]
 
-
 # rename EDBs as necessary 
 dt[edb == "Eastland Network", edb := "Firstlight Network"]
+
+##############################################
+# extra info: line length and nb of customers
+dt_line_length <- dt[schedule == "SCHEDULE 9c: REPORT ON OVERHEAD LINES AND UNDERGROUND CABLES" &
+                       description == "Total circuit length (for supply)" & 
+                       sub_category == "Total circuit length (km)", c("disc_yr", "edb", "value"), with=F]
+setnames(dt_line_length, "value", "line_length")
+stopifnot(all(dt_line_length[, .(n = .N), by=c("edb")]$n==length(unique(dt$disc_yr))))
+
+
+dt_icp <- dt[schedule == "SCHEDULE 8: REPORT ON BILLED QUANTITIES AND LINE CHARGE REVENUES" &
+               category=="Total" & description == "Average no. of ICPs in disclosure year",
+             c("disc_yr", "edb", "value"), with=F]
+setnames(dt_icp, "value", "nb_connections")
+stopifnot(all(dt_icp[, .(n = .N), by=c("edb")]$n==length(unique(dt$disc_yr))))
+dt_extra <- merge(dt_icp, dt_line_length, all=T)
+stopifnot(nrow(dt_extra[is.na(nb_connections) | is.na(line_length)]) == 0)
+
+fwrite(dt_extra, file.path(here::here(), "data", "edb_extra_info.csv"))
+###############################################
+
+
 
 # focus on right schedule
 dt <- dt[schedule == "SCHEDULE 12b: REPORT ON FORECAST CAPACITY" &
