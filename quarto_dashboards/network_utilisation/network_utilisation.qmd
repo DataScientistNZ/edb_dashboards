@@ -419,6 +419,8 @@ ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
   coord_trans(x='log10') +
   geom_point(aes(color=edb), size=2) + theme_minimal() +
   ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - curated"))
 
 ```
@@ -433,6 +435,8 @@ ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
   coord_trans(x='log10') +
   geom_point(aes(color=edb), size=2) + theme_minimal() +
   ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - curated"))
 
 ```
@@ -448,6 +452,8 @@ ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
   coord_trans(x='log10') +
   geom_point(aes(color=edb), size=2) + theme_minimal() +
   ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - curated"))
 
 ```
@@ -462,6 +468,8 @@ ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
   coord_trans(x='log10') +
   geom_point(aes(color=edb), size=2) + theme_minimal() +
   ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - curated"))
 
 ```
@@ -481,6 +489,8 @@ ggplot(dt_agg[status == my_status & disc_yr == latest_year],
   coord_trans(x='log10') +
   geom_point(aes(color=edb), size=2) + theme_minimal() +
   ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - raw data"))
 
 ```
@@ -495,6 +505,8 @@ ggplot(dt_agg[status == my_status & disc_yr == latest_year],
   coord_trans(x='log10') +
   geom_point(aes(color=edb), size=2) + theme_minimal() +
   ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - raw data"))
 
 ```
@@ -510,6 +522,8 @@ ggplot(dt_agg[status == my_status & disc_yr == latest_year],
   coord_trans(x='log10') +
   geom_point(aes(color=edb), size=2) + theme_minimal() +
   ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - raw data"))
 
 ```
@@ -524,6 +538,8 @@ ggplot(dt_agg[status == my_status & disc_yr == latest_year],
   coord_trans(x='log10') +
   geom_point(aes(color=edb), size=2) + theme_minimal() +
   ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - raw data"))
 
 ```
