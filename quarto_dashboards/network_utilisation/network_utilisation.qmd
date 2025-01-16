@@ -383,10 +383,11 @@ eplot_line(dt_agg[status == my_status], x = "disc_yr", y = field, groupby = "edb
 
 ## text into model
 <h5>Utilisation in 2024 presented against nomber of customers or line length</h5>
-This page presents the aggregated utilisation for all EDBs against either:
+This page presents the aggregated utilisation for all EDBs against:
 
 * the number of connections, or
-* the total length of the network
+* the total length of the network, or
+* the density, defined as the ratio of the number of connections divided by the total length of the network
 
 The first charts present results with the curated dataset (see methodology described in the "Data Issues" section), then the same results are presented using all the data without any filtering.  
 
@@ -396,8 +397,8 @@ dt_extra <- fread(file.path(here::here(), "data", "edb_extra_info.csv"))
 dt_extra[, log_nb_connections := log(nb_connections)]
 dt_extra[, log_line_length := log(line_length)]
 
-dt_agg_clean <- merge(dt_agg_clean, dt_extra)
-dt_agg <- merge(dt_agg, dt_extra)
+dt_agg_clean <- merge(dt_agg_clean, dt_extra)[, density := nb_connections/line_length]
+dt_agg <- merge(dt_agg, dt_extra)[, density := nb_connections/line_length]
 
 latest_year <- max(dt_agg_clean$disc_yr)
 
@@ -415,13 +416,23 @@ field <- "utilisation"
 x_field <- "nb_connections"
 my_status <- "NonExempt"
 ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
-       aes(x = nb_connections, y = get(field))) + 
+       aes(x = nb_connections, y = get(field))) +
   coord_trans(x='log10') +
   geom_point(aes(color=edb), size=2) + theme_minimal() +
   ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
-  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) +
   labs(title = "geom_text_repel()") +
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - curated"))
+
+# eplot_scatter(dt_agg_clean[status == my_status & disc_yr == latest_year], 
+#               x="nb_connections", y="utilisation", groupby = "edb") |>
+#   e_legend(
+#     orient = 'vertical',
+#     right = 0,
+#     top = "middle"
+#   ) |>
+#   e_grid(right = 200, left=50, bottom=30) |>
+#   e_title(paste0(field, " ", latest_year, " (", my_status, ") - curated"))
 
 ```
 
@@ -440,6 +451,23 @@ ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - curated"))
 
 ```
+
+```{r, echo=F}
+#| title: Utilisation vs density
+
+x_field <- "density"
+my_status <- "NonExempt"
+ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
+       aes(x = get(x_field), y = get(field))) + 
+  coord_trans(x='log10') +
+  geom_point(aes(color=edb), size=2) + theme_minimal() +
+  ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
+  ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - curated"))
+
+```
+
 ### result2 {.tabset}
 
 ```{r, echo=F}
@@ -462,6 +490,22 @@ ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
 #| title: Utilisation vs line length
 
 x_field <- "line_length"
+my_status <- "Exempt"
+ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
+       aes(x = get(x_field), y = get(field))) + 
+  coord_trans(x='log10') +
+  geom_point(aes(color=edb), size=2) + theme_minimal() +
+  ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
+  ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - curated"))
+
+```
+
+```{r, echo=F}
+#| title: Utilisation vs density
+
+x_field <- "density"
 my_status <- "Exempt"
 ggplot(dt_agg_clean[status == my_status & disc_yr == latest_year],
        aes(x = get(x_field), y = get(field))) + 
@@ -510,6 +554,23 @@ ggplot(dt_agg[status == my_status & disc_yr == latest_year],
   ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - raw data"))
 
 ```
+
+```{r, echo=F}
+#| title: Utilisation vs density
+
+x_field <- "density"
+my_status <- "NonExempt"
+ggplot(dt_agg[status == my_status & disc_yr == latest_year],
+       aes(x = get(x_field), y = get(field))) + 
+  coord_trans(x='log10') +
+  geom_point(aes(color=edb), size=2) + theme_minimal() +
+  ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
+  ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - raw data"))
+
+```
+
 ### result2 {.tabset}
 
 ```{r, echo=F}
@@ -544,7 +605,21 @@ ggplot(dt_agg[status == my_status & disc_yr == latest_year],
 
 ```
 
+```{r, echo=F}
+#| title: Utilisation vs density
 
+x_field <- "density"
+my_status <- "Exempt"
+ggplot(dt_agg[status == my_status & disc_yr == latest_year],
+       aes(x = get(x_field), y = get(field))) + 
+  coord_trans(x='log10') +
+  geom_point(aes(color=edb), size=2) + theme_minimal() +
+  ylab(field) + ylim(c(0, NA)) + xlab(x_field) +
+  ggrepel::geom_text_repel(aes(label=edb, color=edb), size=3) + 
+  labs(title = "geom_text_repel()") +
+  ggtitle(paste0(field, " ", latest_year, " (", my_status, ") - raw data"))
+
+```
 
 # Data
 
