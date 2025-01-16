@@ -309,7 +309,7 @@ This page presents the aggregated utilisation for all EDBs across the observed y
 It is defined as a ratio of:
 
 * the sum of the Current Peak Load for all substations, divided by
-* the sum of the Installed Firm Capacity
+* the sum of the Installed Firm Capacity.
 
 The first charts present results with the curated dataset (see methodology described in the "Data Issues" section), then the same results are presented using all the data without any filtering.  
 
@@ -382,12 +382,12 @@ eplot_line(dt_agg[status == my_status], x = "disc_yr", y = field, groupby = "edb
 # Utilisation^2
 
 ## text into model
-<h5>Utilisation in 2024 presented against nomber of customers or line length</h5>
+<h5>Utilisation in 2024 presented against number of customers or line length</h5>
 This page presents the aggregated utilisation for all EDBs against:
 
 * the number of connections, or
 * the total length of the network, or
-* the density, defined as the ratio of the number of connections divided by the total length of the network
+* the density, defined as the ratio of the number of connections divided by the total length of the network.
 
 The first charts present results with the curated dataset (see methodology described in the "Data Issues" section), then the same results are presented using all the data without any filtering.  
 
