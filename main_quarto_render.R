@@ -16,5 +16,9 @@ my_quarto_render <- function(input_file, ...){
   output_file
 }
 
+# my_quarto_render(file.path(
+#   here::here(), "quarto_dashboards/network_utilisation/network_utilisation.qmd"))
+
+
 my_quarto_render(file.path(
-  here::here(), "quarto_dashboards/network_utilisation/network_utilisation.qmd"))
+  here::here(), "quarto_dashboards/edb_peer_grouping/edb_peer_grouping.qmd"))
