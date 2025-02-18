@@ -1,5 +1,5 @@
 ---
-title: "EDB Network Utilisation"
+title: "EDB Peer Grouping"
 format: 
   dashboard:
     scrolling: true 
@@ -8,7 +8,7 @@ format:
     nav-buttons:
     - text: Home
       icon: list
-      href: https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation
+      href: https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/edb_peer_grouping
     - text: Code
       icon: github
       href: https://github.com/DataScientistNZ/edb_dashboards
