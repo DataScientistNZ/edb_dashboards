@@ -16,6 +16,8 @@ format:
 editor: 
   markdown: 
     wrap: 72
+    
+fontsize: 13px
 ---
   
 ```{r, echo=F}
@@ -86,7 +88,7 @@ latest_year <- max(dt$disc_yr)
 overall_period <- paste0(min(dt$disc_yr), "-", latest_year)
 
 # define chart we'll keep using everywhere
-my_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator, groupby, plot_disc_yr) {
+my_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator, groupby, plot_disc_yr, title=NULL) {
   dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator), 
                                    x = get(x_var))][,  c("disc_yr", "edb", groupby,
                                                          "x", "metric"), with=F]
@@ -104,9 +106,13 @@ my_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator, groupby, plo
     ggrepel::geom_text_repel(aes(label=edb, color=get(groupby)), size=3, alpha=0.8, show.legend=FALSE) +
     # geom_smooth(method = "lm", se = FALSE, color = "black", alpha=0.1) +
     labs(title = "geom_text_repel()", alpha=0.8) +
-    ggtitle(paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")")) +
     theme(legend.title = element_blank())
   if (!x_var %in% c("density")) p <- p + coord_trans(x='log10')
+  if (!is.null(title)) {
+    p <- p + ggtitle(title)
+  } else {
+    p <- p + ggtitle(paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"))
+  }
   p
 }
 
@@ -130,18 +136,6 @@ The below presents all results, for `r latest_year` or for the full period (`r o
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-# y_nominator <- "opex"
-# y_denominator <- "nb_connections"
-# y_denominator <- "icp50_line50"
-# x_var <- "density"
-# # x_var <- "nb_connections"
-# # x_var <- "line_length"
-# # x_var <- "icp50_line50"
-# groupby <- "PAT_peergroup"
-# 
-# plot_disc_yr <- latest_year
-# # plot_disc_yr <- overall_period
 
 my_scatter_gplot(dt, x_var="density", y_numerator="opex", y_denominator="nb_connections", 
                  groupby="PAT_peergroup", plot_disc_yr=latest_year)
@@ -468,4 +462,157 @@ my_scatter_gplot(dt, x_var="density", y_numerator="totex_fcs", y_denominator="ic
 ```
 
 
+# Raoul's 2 cents
+
+## section 1 - pat peer grouping
+
+### part 1 {width="28%"}
+
+<h5>Comment on existing PAT peer grouping</h5>
+
+When published in March 2019, the below specifications for PAT peer grouping have been shared with EDBs:
+
+<div style="font-size: 12px;">
+* Large with major city Large EDBs with greater than 70,000 ICPs serving one of New Zealand's largest cities with a population over 200,000. Comprised of: Orion NZ, Vector, WEL Networks, Wellington Electricity.
+* Large with secondary city Large EDBs with greater than 70,000 ICPs serving a New Zealand city with a population of between 100,000 and 200,000. Comprised of: Aurora Energy, Powerco, Unison Networks.
+* Medium regional Medium sized EDBs with between 30,000 and 70,000 ICPs serving a city or town with a population of between 10,000 and 100,000. Comprised of: Alpine Energy, Counties Power, Electra, Mainpower NZ, Network Tasman.
+* Intermediate regional Intermediate sized EDBs with between 10,000 and 30,000 ICPs serving a city or town with a population of between 10,000 and 100,000. Comprised of: EA Networks, Eastland Network, Horizon Energy, Marlborough Lines, Network Waitaki, Northpower, Waipa Networks 
+* Medium rural Medium or intermediate sized EDBs with between 10,000 and 70,000 ICPs serving smaller towns or areas with populations under 10,000. Comprised of: OtagoNet, The Lines Company, The Power Company, Top Energy, Westpower.
+* Small underground Small or intermediate sized EDBs with up to 30,000 ICPs with a significant proportion of the network underground. Comprised of: Electricity Invercargill, Nelson Electricity.
+* Small and rural Smaller sized EDBs with less than 10,000 ICPs serving smaller towns or areas with populations under 10,000. Comprised of: Buller Electricity, Centralines, Scanpower.
+</div>
+
+### column1 {width="38%"}
+```{r, echo=F}
+#| title: Figure 1
+my_scatter_gplot(dt, x_var="nb_connections", y_numerator="nb_connections", y_denominator = "line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period, 
+                 title=paste0("density vs nb_connections", overall_period)) + 
+  scale_x_continuous(labels = scales::label_number(scale = 1e-3, suffix = "k"))
+```
+
+### part 3 {width="34%"}
+
+A great way to understand and display the choice of existing peers is figure 1.
+
+It is clear this grouping can be explained as a trade off between:
+
+* Mainly the number of connections (explicitly referenced in the above specifications)
+* density as a proxy for rurality
+
+The seven groups simply become the observed clusters and can be seen as follows:
+
+* Large EDB with major city: high number of connections and high density
+* Large EDB with secondary city: high number of connections, medium-high density
+* Medium regional EDB: medium number of connections, medium density
+* Intermediate Regional EDB: medium-low number of connections, medium density
+* Medium rural EDB: medium-low number of connections, low density
+* Small underground EDB: low number of connections, high density
+* Small rural EDB: low number of connections, low density
+
+It's a minor issue, but let's mention one outlier: Northpower. It should have been labelled as Medium Regional EDB instead of Intermediate EDB according to the specifications for the PAT peer grouping, and visually stands out in the identified clusters.
+
+## next line
+
+### part 4
+
+<h5>Focus on cost</h5>
+It appears clear that cost (opex / capex / totex ...) is not really part of the picture for the considered peer grouping. But the PAT peer grouping does succeed in grouping networks providers facing relatively similar challenges.
+
+Now, focusing more on cost, one might wonder what is the best metric to track it.
+Not only the appropriate total cost is to be defined (opex / capex / totex), but the appropriate standardisation is also a challenge. Even involving only two key drivers, should it be monitored per customer or per km of line?
+
+For the rest of this page, to simplify, let's first assume that the most appropriate representation of an overall fair cost to consumers is totex_fcs (opex + flow of capital services as defined by CEPA). Remains the standardisation issue. Let's observe possible options in Figure 2;
+
+Focusing for example on Vector: 
+
+* Figure 2 - per nb_connections: It delivers services for a lower cost per customer than most of the rest of the industry, and also for a lower cost per customer than identified peers Orion and WEL Networks.  
+* Figure 2 - per line_length: It is the most expensive network provider of New Zealand, also more expensive than all its peers, if we focus on the cost per km of lines.
+
+Even within a peer group, to actually derive an insight on cost comparison, it is required to agree on a trade off between these 2 key cost drivers. That is exactly what is done with the icp50_line50 standardisation, which offers a way to give as much weight to these two cost drivers, acknowledging these weights are arbitrarily chosen. Doing so and mindful of the methodology used, one can then observe that Vector seems to overall deliver for a  higher cost than its identified peers, but a few other network providers in other peer groups appear more expensive.
+
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: Figure 2 - per nb_connections
+my_scatter_gplot(dt, x_var="density", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: Figure 2 - per line_length
+
+my_scatter_gplot(dt, x_var="density", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: Figure 2 - per icp50_line50
+
+my_scatter_gplot(dt, x_var="density", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+
+
+## next line
+
+### about icp50_line50 {width="30%"}
+
+<h5>About icp50_line50</h5>
+
+The offered methodology to standardise cost in a way that the two key drivers are included involves arbitrary weights.
+Let's mention a few things about it:
+
+* The approach is very similar to involving a Cobb-Douglas modelisation for the cost function with the number of connections and the circuit length as cost drivers.
+* This approach has been taken by CEPA in their productivity analysis (model 1).
+* This approach is used by the Commerce Commission to set allowances for regulated businesses - For instance, for network opex, the retained corresponding weights were 44% for the number of connections and 53% for the circuit length.
+* Let's note that the retained weights for DPP4 don't add up to 100 - it means that doubling the number of served customers and the size of the network altogether is expected to be done for slightly less than twice the cost, because of economies of scales empirically observed.
+* The retained simplified weights for this analysis (50% for both key cost drivers) are relatively close to what has been retained in the context of Opex allowances in DPP4, and did not involve any economy of scale. Including an economy of scale would lead to a cost being displayed higher for big EDBs and cheaper for smaller EDBs.
+
+
+### about density {width="28%"}
+
+<h5>About density</h5>
+
+My opinion is that density matters as a proxy for rurality. Serving rural customers means a longer network, with typically more overhead and less cables. It means the cost tends to be higher per customer, but lower per km of line.
+
+These two key drivers are already decently handled with the offered icp50_line50 standardisation. 
+Let's have a look at *Figure 2 - per icp50_line50*: The density information does not matter so much, and there is no clear pattern: it's because the icp vs line length trade-off is already best handled by the involved standardisation, and the density loses all its explanation power once the two involved drivers are accounted for. 
+
+As such, density matters to identify networks facing relatively similar challenges, and it makes sense to define peer groups combining it with the number of customers as the PAT offers. But as per say, it's not a real driver of cost, it's a function of the two most important of them. The best way to numerically represent this trade-off is multiplicative, as offered in this visualisation and as also done in simple modelling in productivity studies.
+
+### Limitations {width="42%"}
+
+<h5>Limitations</h5>
+
+It's important to acknowledge the limitations of comparing costs.
+
+A significant stakeholder shared :
+
+_There are a lot of cost drivers that are difficult to measure (e.g., lines in coastal areas degrade at faster rates and require more inspection and maintenance, volcanic rock in Auckland makes it more expensive to deliver underground services, sulphurous atmospheres in Rotorua mean you have to use different equipment and there are additional safety precautions that are required in undertaking works in trenches, cities require more traffic management than country areas, etc). The risk of omitted and/or misspecified variables is therefore very high with consequences for efficiency measurement._
+
+
+It was used as an argument against a top down approach to measure individual productivity of EDBs. All of the above is definitely true, and not accounted for when performing a cost comparison as done in this dashboard. Yet, it does not prevent the cost comparison to be informative and to make a lot of sense. A higher cost can indeed be tied to specific environmental factors. And that's fine. Observing these higher cost for some network providers actually facilitate the understanding of these individual circumstances, which can be enriched with more qualitative information. 
+
+By itself, overall cost comparison or benchmarking is not sufficient to have a definitive conclusion on the productivity of involved network providers. But in the absence of data and methods to account for these specific circumstances, it remains great information.
+
+The lower level of the analysis (e.g. vegetation management), the bigger the impact of specific circumstances, environmental factors and differences in reporting methodologies. Not two providers face the exact same challenge. But in my opinion we can, and even absolutely should, monitor standardised cost, to improve the understanding of the activity of individual companies of the electricity distribution industry.
+
+## Recommendations
+
+### Overall recommendations
+<h5>Recommendations</h5>
+
+* Analyse any cost standardised both by number connections AND line length. Even within a single peer group, network characteristics differences are too important to afford to focus on a single one of them (see Vector example above).
+* Keep using the PAT peer groups, but don't stick to comparisons within groups. The PAT peer groups offer a decent insight on challenges and network characteristics, but these differences are already accounted for in a more informative way once the cost is standardised appropriately. It also makes sense to compare standardised cost across peer groups. 
+* Don't necessarily pursue further insights on cost against density - the relevant information is already contained both in the peer group and in the appropriate standardisation method for cost.
+
+A temporary version of the [PAT](https://public.tableau.com/app/profile/commerce.commission/viz/Performanceaccessibilitytool2023-NewZealandelectricitydistributors-2023Update-draft/Homepage?publish=yes) has been created to allow users to normalise any cost as per this study (using icp50_line50). The next update of the PAT which will include the 2024 data is expected to also include these changes. 
 
