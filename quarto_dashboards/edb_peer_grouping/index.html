@@ -79,7 +79,7 @@ grid-auto-rows: minmax(0, 1fr);">
 EDB Peer Grouping
 </h5>
 <p>This dashboard aims to explore Electricity Distribution Businesses’ data with the objective of facilitating the identification of natural peers.</p>
-<p>The dataset used in this dashboard is the one published by the Commerce Commission that involves ID data gathered from Electricity Distribution Businesses. The raw data can be found <a href="https://comcom.govt.nz/regulated-industries/electricity-lines/electricity-distributor-performance-and-data/information-disclosed-by-electricity-distributors">here</a>.</p>
+<p>The dataset used in this dashboard is the one published by the Commerce Commission that involves ID data gathered from Electricity Distribution Businesses and covers the period 2013-2024. The raw data can be found <a href="https://comcom.govt.nz/regulated-industries/electricity-lines/electricity-distributor-performance-and-data/information-disclosed-by-electricity-distributors">here</a>.</p>
 <p>It uses the following data:</p>
 <ul>
 <li>opex - total operational expenditures</li>
@@ -94,7 +94,8 @@ EDB Peer Grouping
 <li>density - means nb_connections / line_length</li>
 <li>icp50_line50 - means nb_connections^0.5 * line_length^0.5</li>
 </ul>
-<p>Let’s note that the above quantities, when in $, have been calculated in nominal terms. That’s a simplified approach, as the definition of the flow of capital services implicitly refers to different inflation indices that have not been used in this study.</p>
+<p>The definition of the flow of capital services has been taken from CEPA’s <a href="https://comcom.govt.nz/__data/assets/pdf_file/0033/356757/CEPA-EDB-Productivity-Study-A-report-prepared-for-the-Commerce-Commission-24-June-2024.pdf">study on EDB productivity</a>. Let’s note that above quantities, when in $, have been calculated in nominal terms. That’s a simplified approach, as the definition of the flow of capital services should use different inflation indices (e.g.&nbsp;ppi, cgpi, lci…) that were not involved in this analysis.</p>
+<p>Results are often presented twice, once for 2024, once for the full period 2013-2024. Metrics presented for the full period are averaged through the period. When ratios are involved, the average has been calculated on the ratio over the years (not on the numerator and denominator separately).</p>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
     <template>Expand</template>
@@ -491,7 +492,7 @@ grid-auto-rows: minmax(0, 1fr);">
 </div>
 </div>
 <div id="raouls-2-cents" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-orientation="rows" aria-labelledby="tab-raouls-2-cents">
-<div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, 1fr) minmax(3em, 1fr) minmax(3em, 1fr) minmax(3em, 1fr); grid-auto-columns: minmax(0, 1fr);">
+<div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, 1fr) minmax(3em, 1fr) minmax(3em, 1fr) minmax(3em, max-content) minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 28fr) minmax(3em, 38fr) minmax(3em, 34fr);
 grid-auto-rows: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
@@ -536,6 +537,9 @@ Comment on existing PAT peer grouping
 </div><div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
 <div class="card html-fill-item html-fill-container bslib-card" data-fill="false" data-bslib-card-init="" data-require-bs-caller="card()" data-full-screen="false">
 <div class="card-body html-fill-item html-fill-container">
+<h5>
+A choice of peer groups driven by the number of connections and rurality
+</h5>
 <p>A great way to understand and display the choice of existing peers is figure 1.</p>
 <p>It is clear this grouping can be explained as a trade off between:</p>
 <ul>
@@ -570,14 +574,15 @@ grid-auto-rows: minmax(0, 1fr);">
 <h5>
 Focus on cost
 </h5>
-<p>It appears clear that cost (opex / capex / totex …) is not really part of the picture for the considered peer grouping. But the PAT peer grouping does succeed in grouping networks providers facing relatively similar challenges.</p>
+<p>It appears clear that cost (opex / capex / totex …) is not really part of the picture for the considered peer grouping. But the PAT peer grouping does succeed in grouping networks providers facing relatively similar challenges and network characteristics.</p>
 <p>Now, focusing more on cost, one might wonder what is the best metric to track it. Not only the appropriate total cost is to be defined (opex / capex / totex), but the appropriate standardisation is also a challenge. Even involving only two key drivers, should it be monitored per customer or per km of line?</p>
-<p>For the rest of this page, to simplify, let’s first assume that the most appropriate representation of an overall fair cost to consumers is totex_fcs (opex + flow of capital services as defined by CEPA). Remains the standardisation issue. Let’s observe possible options in Figure 2;</p>
+<p>For the rest of this page, to simplify, we assumed that the most appropriate representation of the overall cost is totex_fcs (opex + flow of capital services as defined by CEPA). The recommendation is to replace capex due to its lumpy nature. Focusing on opex only is not advisable, considering network providers have some flexibility in their investments that end up being either a capex or an opex solution.</p>
+<p>Remains the standardisation issue. Let’s observe possible options in Figure 2;</p>
 <p>Focusing for example on Vector:</p>
 <ul>
-<li>Figure 2 - per nb_connections: It delivers services for a lower cost per customer than most of the rest of the industry, and also for a lower cost per customer than identified peers Orion and WEL Networks.<br>
+<li>Figure 2 - per nb_connections: Vector delivers services for a lower cost per customer than most of the rest of the industry, and also for a lower cost per customer than identified peers Orion and WEL Networks.<br>
 </li>
-<li>Figure 2 - per line_length: It is the most expensive network provider of New Zealand, also more expensive than all its peers, if we focus on the cost per km of lines.</li>
+<li>Figure 2 - per line_length: Looking at the cost per km of line, Vector is the most expensive network provider of New Zealand, more expensive than all its peers.</li>
 </ul>
 <p>Even within a peer group, to actually derive an insight on cost comparison, it is required to agree on a trade off between these 2 key cost drivers. That is exactly what is done with the icp50_line50 standardisation, which offers a way to give as much weight to these two cost drivers, acknowledging these weights are arbitrarily chosen. Doing so and mindful of the methodology used, one can then observe that Vector seems to overall deliver for a higher cost than its identified peers, but a few other network providers in other peer groups appear more expensive.</p>
 </div>
@@ -613,7 +618,7 @@ Focus on cost
     </span>
 </bslib-tooltip><script data-bslib-card-init="">bslib.Card.initializeAllCards();</script></div>
 </div>
-<div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 30fr) minmax(3em, 28fr) minmax(3em, 42fr);
+<div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 30fr) minmax(3em, 27fr) minmax(3em, 43fr);
 grid-auto-rows: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
 <div class="card html-fill-item html-fill-container bslib-card" data-fill="false" data-bslib-card-init="" data-require-bs-caller="card()" data-full-screen="false">
@@ -627,7 +632,7 @@ About icp50_line50
 <li>This approach has been taken by CEPA in their productivity analysis (model 1).</li>
 <li>This approach is used by the Commerce Commission to set allowances for regulated businesses - For instance, for network opex, the retained corresponding weights were 44% for the number of connections and 53% for the circuit length.</li>
 <li>Let’s note that the retained weights for DPP4 don’t add up to 100 - it means that doubling the number of served customers and the size of the network altogether is expected to be done for slightly less than twice the cost, because of economies of scales empirically observed.</li>
-<li>The retained simplified weights for this analysis (50% for both key cost drivers) are relatively close to what has been retained in the context of Opex allowances in DPP4, and did not involve any economy of scale. Including an economy of scale would lead to a cost being displayed higher for big EDBs and cheaper for smaller EDBs.</li>
+<li>The retained simplified weights for this analysis (50% for both key cost drivers) are relatively close to what has been retained in the context of Opex allowances in DPP4, and did not involve any economy of scale. Including an economy of scale would lead to a comparatively higher cost for big EDBs.</li>
 </ul>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
@@ -644,7 +649,7 @@ About density
 </h5>
 <p>My opinion is that density matters as a proxy for rurality. Serving rural customers means a longer network, with typically more overhead and less cables. It means the cost tends to be higher per customer, but lower per km of line.</p>
 <p>These two key drivers are already decently handled with the offered icp50_line50 standardisation. Let’s have a look at <em>Figure 2 - per icp50_line50</em>: The density information does not matter so much, and there is no clear pattern: it’s because the icp vs line length trade-off is already best handled by the involved standardisation, and the density loses all its explanation power once the two involved drivers are accounted for.</p>
-<p>As such, density matters to identify networks facing relatively similar challenges, and it makes sense to define peer groups combining it with the number of customers as the PAT offers. But as per say, it’s not a real driver of cost, it’s a function of the two most important of them. The best way to numerically represent this trade-off is multiplicative, as offered in this visualisation and as also done in simple modelling in productivity studies.</p>
+<p>As such, density matters to identify networks facing relatively similar challenges, and it makes sense to define peer groups combining it with the number of customers as the PAT offers. But as per say, it’s not a real driver of cost, it’s a function of the two most important of them. A better way to numerically represent it seems to be multiplicative, e.g.&nbsp;as per the icp50_line50 standardisation presented in this analysis, and as also done in simple modelling in productivity studies.</p>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
     <template>Expand</template>
@@ -659,11 +664,11 @@ About density
 Limitations
 </h5>
 <p>It’s important to acknowledge the limitations of comparing costs.</p>
-<p>A significant stakeholder shared :</p>
+<p>A significant stakeholder shared:</p>
 <em>There are a lot of cost drivers that are difficult to measure (e.g., lines in coastal areas degrade at faster rates and require more inspection and maintenance, volcanic rock in Auckland makes it more expensive to deliver underground services, sulphurous atmospheres in Rotorua mean you have to use different equipment and there are additional safety precautions that are required in undertaking works in trenches, cities require more traffic management than country areas, etc). The risk of omitted and/or misspecified variables is therefore very high with consequences for efficiency measurement.</em>
 <p>It was used as an argument against a top down approach to measure individual productivity of EDBs. All of the above is definitely true, and not accounted for when performing a cost comparison as done in this dashboard. Yet, it does not prevent the cost comparison to be informative and to make a lot of sense. A higher cost can indeed be tied to specific environmental factors. And that’s fine. Observing these higher cost for some network providers actually facilitate the understanding of these individual circumstances, which can be enriched with more qualitative information.</p>
 <p>By itself, overall cost comparison or benchmarking is not sufficient to have a definitive conclusion on the productivity of involved network providers. But in the absence of data and methods to account for these specific circumstances, it remains great information.</p>
-<p>The lower level of the analysis (e.g.&nbsp;vegetation management), the bigger the impact of specific circumstances, environmental factors and differences in reporting methodologies. Not two providers face the exact same challenge. But in my opinion we can, and even absolutely should, monitor standardised cost, to improve the understanding of the activity of individual companies of the electricity distribution industry.</p>
+<p>The lower level of the analysis (e.g.&nbsp;vegetation management), the bigger the impact of specific circumstances, environmental factors and differences in reporting methodologies. Not two providers face the exact same challenge. But in my opinion we can, and even absolutely should, monitor analyse and benchmark standardised cost, to improve the understanding of the activity of individual electricity distribution businesses.</p>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
     <template>Expand</template>
@@ -675,15 +680,14 @@ Limitations
 </div>
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
 grid-auto-rows: minmax(0, 1fr);">
-<div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
 <div class="card html-fill-item html-fill-container bslib-card" data-fill="false" data-bslib-card-init="" data-require-bs-caller="card()" data-full-screen="false">
 <div class="card-body html-fill-item html-fill-container">
 <h5>
 Recommendations
 </h5>
 <ul>
-<li>Systematically analyse any cost standardised both by number connections AND line length. Even within a single peer group, network characteristics differences are too important to afford to focus on a single one of them (see Vector example above).</li>
-<li>Keep using the PAT peer groups, but don’t stick to comparisons within groups. They offer a decent insight on challenges and network characteristics, but these differences are already accounted for in a more informative way once the cost is standardised appropriately. It also makes sense to compare standardised cost across peer groups.</li>
+<li>Analyse any cost standardised both by number connections AND line length. Even within a single peer group, network characteristics differences are too important to afford to focus on a single one of them (see Vector example above).</li>
+<li>Keep using the PAT peer groups, but don’t stick to comparisons within groups. The PAT peer groups offer a decent insight on challenges and network characteristics, but these differences are already accounted for in a more informative way once the cost is standardised appropriately. It also makes sense to compare standardised cost across peer groups.</li>
 <li>Don’t necessarily pursue further insights on cost against density - the relevant information is already contained both in the peer group and in the appropriate standardisation method for cost.</li>
 </ul>
 <p>A temporary version of the <a href="https://public.tableau.com/app/profile/commerce.commission/viz/Performanceaccessibilitytool2023-NewZealandelectricitydistributors-2023Update-draft/Homepage?publish=yes">PAT</a> has been created to allow users to normalise any cost as per this study (using icp50_line50). The next update of the PAT which will include the 2024 data is expected to also include these changes.</p>
@@ -694,9 +698,23 @@ Recommendations
         <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" style="height:1em;width:1em;" aria-hidden="true" role="img"><path d="M20 5C20 4.4 19.6 4 19 4H13C12.4 4 12 3.6 12 3C12 2.4 12.4 2 13 2H21C21.6 2 22 2.4 22 3V11C22 11.6 21.6 12 21 12C20.4 12 20 11.6 20 11V5ZM4 19C4 19.6 4.4 20 5 20H11C11.6 20 12 20.4 12 21C12 21.6 11.6 22 11 22H3C2.4 22 2 21.6 2 21V13C2 12.4 2.4 12 3 12C3.6 12 4 12.4 4 13V19Z"></path></svg>
     </span>
 </bslib-tooltip><script data-bslib-card-init="">bslib.Card.initializeAllCards();</script></div>
-<div id="3ade8a4a-fb1d-4a6c-8409-ac45482d5fc9" class="hidden html-fill-item html-fill-container">
-
 </div>
+<div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
+grid-auto-rows: minmax(0, 1fr);">
+<div class="card html-fill-item html-fill-container bslib-card" data-fill="false" data-bslib-card-init="" data-require-bs-caller="card()" data-full-screen="false">
+<div class="card-body html-fill-item html-fill-container">
+<h5>
+Further opinion
+</h5>
+<p>A top-down approach to cost benchmarking is more suitable because it provides a broader perspective on overall costs, enabling a fairer comparison across different network providers. This method also better captures the complexities and scale of operations, which is essential for understanding cost efficiency. Furthermore, it accounts for the flexibility businesses have in categorising their investments and operational costs, ensuring a more accurate and comprehensive reflection of total expenditures.</p>
+</div>
+<bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
+    <template>Expand</template>
+    <span class="bslib-full-screen-enter badge rounded-pill">
+        <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" style="height:1em;width:1em;" aria-hidden="true" role="img"><path d="M20 5C20 4.4 19.6 4 19 4H13C12.4 4 12 3.6 12 3C12 2.4 12.4 2 13 2H21C21.6 2 22 2.4 22 3V11C22 11.6 21.6 12 21 12C20.4 12 20 11.6 20 11V5ZM4 19C4 19.6 4.4 20 5 20H11C11.6 20 12 20.4 12 21C12 21.6 11.6 22 11 22H3C2.4 22 2 21.6 2 21V13C2 12.4 2.4 12 3 12C3.6 12 4 12.4 4 13V19Z"></path></svg>
+    </span>
+</bslib-tooltip><script data-bslib-card-init="">bslib.Card.initializeAllCards();</script></div><div id="3ade8a4a-fb1d-4a6c-8409-ac45482d5fc9" class="hidden html-fill-item html-fill-container">
+
 </div>
 </div>
 </div>
