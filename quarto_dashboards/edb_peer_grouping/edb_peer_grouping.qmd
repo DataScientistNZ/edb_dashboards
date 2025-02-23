@@ -504,7 +504,7 @@ A great way to understand and display the choice of existing peers is figure 1.
 It is clear this grouping can be explained as a trade off between:
 
 * Mainly the number of connections (explicitly referenced in the above specifications)
-* density as a proxy for rurality
+* Density as a proxy for rurality
 
 The seven groups simply become the observed clusters and can be seen as follows:
 
