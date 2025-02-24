@@ -107,6 +107,35 @@ dt_all[, density := nb_connections/line_length]
 # add icp50_line50 normalisation
 dt_all[, icp50_line50 := nb_connections^0.5 * line_length^0.5]
 
+
+
+
+################################################################################
+###        Artificially add network utilisation prepared elsewhere
+###############################################################################
+
+# load utilisation data
+# this file is obtained by running 01_prep_network_utilisation_data.R
+dt_pc <- fread(file.path(here::here(), "data", "utilisation_data.csv"))
+dt_pc[edb=="Scanpower"]
+
+
+# make a clean copy only using substations with both peak demand and capacity info
+dt_pc_clean <- data.table(dt_pc[!(is.na(peak) | peak == 0 | capacity == 0 | is.na(capacity))])
+
+# create datasets with aggregated substations (keep clean filter)
+dt_agg_clean <- dt_pc_clean[, .(peak = sum(peak, na.rm = T), capacity = sum(capacity, na.rm = T)), 
+                            by=c("edb", "disc_yr", "status")]
+dt_agg_clean[, "network_utilisation" := peak / capacity]
+
+# merge network utilisation in previous dataset
+# care, we don't seem to have scanpower data for network utilisation at all... that sucks
+dt_all <- merge(dt_all, dt_agg_clean[, c("edb", "disc_yr", "network_utilisation"), with=F], all.x=T)
+
+
+###############################################################################
+# Save overall prepared data
 fwrite(dt_all, file.path("data", "generic_purpose_edb_data.csv"))
+
 
 dt_all
