@@ -114,7 +114,7 @@ It uses the following data:
 * totex - means opex + capex
 * totex_fcs - means opex + flow_capital_services
 * density - means nb_connections / line_length 
-* icp50_line50 - means nb_connections^0.5 * line_length^0.5 
+* icp50_line50 - geometric mean of the number of connections and the line length, i.e. nb_connections^0.5 * line_length^0.5 
 
 The definition of the flow of capital services has been taken from CEPA's [study on  EDB productivity](https://comcom.govt.nz/__data/assets/pdf_file/0033/356757/CEPA-EDB-Productivity-Study-A-report-prepared-for-the-Commerce-Commission-24-June-2024.pdf).
 Let's note that above quantities, when in $, have been calculated in nominal terms. That's a simplified approach, as the definition of the flow of capital services should use different inflation indices (e.g. ppi, cgpi, lci...) that were not involved in this analysis.
@@ -577,8 +577,8 @@ my_scatter_gplot(dt, x_var="density", y_numerator="totex_fcs", y_denominator="ic
 
 <h5>About icp50_line50</h5>
 
-The offered methodology to standardise cost in a way that the two key drivers are included involves arbitrary weights.
-Let's mention a few things about it:
+The offered methodology to standardise cost in a way that the two key cost drivers are included involves arbitrary weights. They have been taken as 50% each, meaning it's simply the geometric mean of the number of connections and the line length.
+Let's mention a few more things about this standardisation:
 
 * The approach is very similar to involving a Cobb-Douglas modelisation for the cost function with the number of connections and the circuit length as cost drivers.
 * This approach has been taken by CEPA in their productivity analysis (model 1).

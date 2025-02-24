@@ -69,7 +69,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="page-layout-custom quarto-dashboard-content bslib-gap-spacing html-fill-container dashboard-scrolling quarto-dashboard-pages">  
 
 <div class="bslib-grid-item html-fill-item tab-content bslib-grid" data-layout="flow" style="display: grid; grid-template-rows: minmax(3em, 1fr); grid-auto-columns: minmax(0, 1fr);">
-<div id="introduction" class="dashboard-page tab-pane show active html-fill-item html-fill-container" data-scrolling="false" data-orientation="rows" aria-labelledby="tab-introduction">
+<div id="introduction" class="dashboard-page tab-pane show active html-fill-item html-fill-container" data-orientation="rows" data-scrolling="false" aria-labelledby="tab-introduction">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
 grid-auto-rows: minmax(0, 1fr);">
@@ -92,7 +92,7 @@ EDB Peer Grouping
 <li>totex - means opex + capex</li>
 <li>totex_fcs - means opex + flow_capital_services</li>
 <li>density - means nb_connections / line_length</li>
-<li>icp50_line50 - means nb_connections^0.5 * line_length^0.5</li>
+<li>icp50_line50 - geometric mean of the number of connections and the line length, i.e.&nbsp;nb_connections^0.5 * line_length^0.5</li>
 </ul>
 <p>The definition of the flow of capital services has been taken from CEPA’s <a href="https://comcom.govt.nz/__data/assets/pdf_file/0033/356757/CEPA-EDB-Productivity-Study-A-report-prepared-for-the-Commerce-Commission-24-June-2024.pdf">study on EDB productivity</a>. Let’s note that above quantities, when in $, have been calculated in nominal terms. That’s a simplified approach, as the definition of the flow of capital services should use different inflation indices (e.g.&nbsp;ppi, cgpi, lci…) that were not involved in this analysis.</p>
 <p>Results are often presented twice, once for 2024, once for the full period 2013-2024. Metrics presented for the full period are averaged through the period. When ratios are involved, the average has been calculated on the ratio over the years (not on the numerator and denominator separately).</p>
@@ -107,7 +107,7 @@ EDB Peer Grouping
 </div>
 </div>
 </div>
-<div id="opex" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-scrolling="false" data-orientation="rows" aria-labelledby="tab-opex">
+<div id="opex" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-orientation="rows" data-scrolling="false" aria-labelledby="tab-opex">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content) minmax(3em, 1fr); grid-auto-columns: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
 grid-auto-rows: minmax(0, 1fr);">
@@ -184,7 +184,7 @@ grid-auto-rows: minmax(0, 1fr);">
 </div>
 </div>
 </div>
-<div id="capex" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-scrolling="false" data-orientation="rows" aria-labelledby="tab-capex">
+<div id="capex" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-orientation="rows" data-scrolling="false" aria-labelledby="tab-capex">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content) minmax(3em, 1fr); grid-auto-columns: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
 grid-auto-rows: minmax(0, 1fr);">
@@ -261,7 +261,7 @@ grid-auto-rows: minmax(0, 1fr);">
 </div>
 </div>
 </div>
-<div id="totex" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-scrolling="false" data-orientation="rows" aria-labelledby="tab-totex">
+<div id="totex" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-orientation="rows" data-scrolling="false" aria-labelledby="tab-totex">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content) minmax(3em, 1fr); grid-auto-columns: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
 grid-auto-rows: minmax(0, 1fr);">
@@ -338,7 +338,7 @@ grid-auto-rows: minmax(0, 1fr);">
 </div>
 </div>
 </div>
-<div id="flow-of-capital-services" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-scrolling="false" data-orientation="rows" aria-labelledby="tab-flow-of-capital-services">
+<div id="flow-of-capital-services" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-orientation="rows" data-scrolling="false" aria-labelledby="tab-flow-of-capital-services">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content) minmax(3em, 1fr); grid-auto-columns: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
 grid-auto-rows: minmax(0, 1fr);">
@@ -415,7 +415,7 @@ grid-auto-rows: minmax(0, 1fr);">
 </div>
 </div>
 </div>
-<div id="totex-fcs" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-scrolling="false" data-orientation="rows" aria-labelledby="tab-totex-fcs">
+<div id="totex-fcs" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-orientation="rows" data-scrolling="false" aria-labelledby="tab-totex-fcs">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content) minmax(3em, 1fr); grid-auto-columns: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
 grid-auto-rows: minmax(0, 1fr);">
@@ -627,7 +627,7 @@ grid-auto-rows: minmax(0, 1fr);">
 <h5>
 About icp50_line50
 </h5>
-<p>The offered methodology to standardise cost in a way that the two key drivers are included involves arbitrary weights. Let’s mention a few things about it:</p>
+<p>The offered methodology to standardise cost in a way that the two key cost drivers are included involves arbitrary weights. They have been taken as 50% each, meaning it’s simply the geometric mean of the number of connections and the line length. Let’s mention a few more things about this standardisation:</p>
 <ul>
 <li>The approach is very similar to involving a Cobb-Douglas modelisation for the cost function with the number of connections and the circuit length as cost drivers.</li>
 <li>This approach has been taken by CEPA in their productivity analysis (model 1).</li>
