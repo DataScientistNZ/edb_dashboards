@@ -1,0 +1,1192 @@
+---
+title: "EDB cost performance analysis"
+format: 
+  dashboard:
+    scrolling: true 
+    # theme: lumen
+    # theme: flatly
+    nav-buttons:
+    - text: Home
+      icon: list
+      href: https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/edb_cost_analysis
+    - text: Code
+      icon: github
+      href: https://github.com/DataScientistNZ/edb_dashboards
+
+editor: 
+  markdown: 
+    wrap: 72
+    
+fontsize: 13px
+---
+  
+```{r, echo=F}
+
+# round all numeric values to n digits (n=3 by default)
+# we do so to allow a nice display
+# makes a copy of the input data by default (use copy=F if undesired)
+round_all_numeric_values <- function(dt, digits=3, copy=T) {
+  if (copy) dt <- data.table(dt)
+  for (nm in names(dt)) {
+    if (is.numeric(dt[[nm]])) {
+      dt[, (nm) := round(get(nm), digits)]
+    }
+  }
+  dt
+}
+
+# custom made display of datatable
+# displaying a copy of the table (copy made in the rounding function)
+my_datatable <- function(dt, ..., digits=3) {
+  DT::datatable(round_all_numeric_values(dt, digits=digits), ..., 
+                extensions = 'Buttons', options = list(
+                  dom = 'Bifrtp', buttons = c('copy', 'csv')))
+}
+
+```
+
+# Introduction {scrolling="false"}
+
+```{r, echo=F}
+
+# load resources and set common variables
+library(data.table)
+library(ggplot2)
+# source(file.path(here::here(), "R", "00_echarts.R"))
+options(scipen=999)
+
+# load prepared data
+dt <- fread(file.path(here::here(), "data", "generic_purpose_edb_data.csv"))
+
+# define generic descriptors
+latest_year <- max(dt$disc_yr)
+overall_period <- paste0(min(dt$disc_yr), "-", latest_year)
+
+# these charts should ideally be rewritten with echarts4r to facilitate reading
+# lack of time and priorities on quantity rather than quality means it's unlikely to
+# happen in the foreseeable future
+# define scatter chart we'll keep using everywhere
+my_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator, groupby, 
+                             plot_disc_yr, title=NULL) {
+  dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator), 
+                                   x = get(x_var))][,  c("disc_yr", "edb", groupby,
+                                                         "x", "metric"), with=F]
+  dt_plot2 <- dt_plot[, .(x = mean(x), metric = mean(metric)), 
+                      by=c("edb", groupby)][, disc_yr := overall_period]
+  dt_plot <- rbind(dt_plot, dt_plot2)
+  
+  p <- ggplot(dt_plot[disc_yr == plot_disc_yr],
+              aes(x = x, y = metric)) +
+    geom_point(aes(color=get(groupby)), size=2, alpha=0.8) +
+    theme_minimal() +
+    ylab(paste0(y_numerator, " / ", y_denominator)) + 
+    ylim(c(0, NA)) + 
+    xlab(x_var) +
+    ggrepel::geom_text_repel(aes(label=edb, color=get(groupby)), size=3, alpha=0.8, show.legend=FALSE) +
+    # geom_smooth(method = "lm", se = FALSE, color = "black", alpha=0.1) +
+    labs(title = "geom_text_repel()", alpha=0.8) +
+    theme(legend.title = element_blank())
+  if (!x_var %in% c("density")) p <- p + coord_trans(x='log10')
+  if (!is.null(title)) {
+    p <- p + ggtitle(title)
+  } else {
+    p <- p + ggtitle(paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"))
+  }
+  p
+}
+
+# define bar chart we'll keep using everywhere
+my_bar_gplot <- function(dt, y_numerator, y_denominator, groupby, plot_disc_yr, flipped_axes=T) {
+  dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator))
+                            ][,  c("disc_yr", "edb", groupby, "metric"), with=F]
+  dt_plot2 <- dt_plot[, .(metric = mean(metric)), 
+                      by=c("edb", groupby)][, disc_yr := overall_period]
+  dt_plot <- rbind(dt_plot, dt_plot2)
+  # hack to have desired order
+  dt_plot[ , my_order := match(get(groupby), sort(unique(dt_plot[[groupby]]))) * 1000000 + metric]
+  
+  dt_plot <- dt_plot[order(my_order)]
+  
+  if (flipped_axes) {
+    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
+           aes(x = metric, y = reorder(edb, my_order, desc=T), fill = get(groupby))) +
+      theme_minimal() + 
+      theme(
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.text.y = element_text(margin = margin(r = -8))
+      )
+  } else {
+    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
+                aes(y = metric, x = reorder(edb, my_order, desc=T), fill = get(groupby))) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+      theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(margin = margin(r = 8))
+      )
+  }
+  
+  p <- p + geom_bar(stat = "identity", alpha=0.8, position = position_dodge()) + 
+    labs(
+      title = paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"),
+      x = "",
+      y = "",
+      fill = "")
+  p
+}
+
+```
+
+## documentation content
+
+<h5>EDB Peer Grouping</h5>
+  
+
+This dashboard aims to explore Electricity Distribution Businesses' data with the objective of comparatively analyse performance, with an emphasis on cost performance.
+
+The dataset used in this dashboard is the one published by the Commerce Commission that involves ID data gathered from Electricity Distribution Businesses and covers the period `r overall_period`. The raw data can be found [here](https://comcom.govt.nz/regulated-industries/electricity-lines/electricity-distributor-performance-and-data/information-disclosed-by-electricity-distributors).
+
+It uses the following data:
+
+* opex - total operational expenditures
+* capex - total capital expenditures
+* rab - opening Regulatory Asset Base
+* depreciation
+* line_length - total line length of the electrical network
+* nb_connections - number of connections of the network
+* flow_capital_services - means (rab + capex/2) * 5.6% + depreciation
+* totex - means opex + capex
+* totex_fcs - means opex + flow_capital_services
+* density - means nb_connections / line_length 
+* icp50_line50 - geometric mean of the number of connections and the line length, i.e. nb_connections^0.5 * line_length^0.5 
+* unplanned_saidi - means the average duration of unplanned interruptions for customers
+* norm_saidi - means the total normalised saidi, i.e the average duration of planned and unplanned interruptions for customers after normalisation. The planned/unplanned breakdown for normalised interruptions is not available in ID data. To learn more about normalisation, read DPP2/3/4 reason papers.  
+
+The definition of the flow of capital services has been taken from CEPA's [study on  EDB productivity](https://comcom.govt.nz/__data/assets/pdf_file/0033/356757/CEPA-EDB-Productivity-Study-A-report-prepared-for-the-Commerce-Commission-24-June-2024.pdf).
+Let's note that above quantities, when in $, have been calculated in nominal terms. That's a simplified approach, as the definition of the flow of capital services should use different inflation indices (e.g. ppi, cgpi, lci...) that were not involved in this analysis.
+
+Results are often presented twice, once for `r latest_year`, once for the full period `r overall_period`. Metrics presented for the full period are averaged through the period. When ratios are involved, the average has been calculated on the ratio over the years (not on the numerator and denominator separately).
+
+The network utilisation data has been prepared as per the methodology described [in this dashboard](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation/). Let's mention that Scanpower is fully missing as did not fill any data regarding substations' peak load and capacity. Some other data issues and how it has been mitigated is covered in the other dashboard ([Data Issues tab](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation/#data-issues)).
+
+
+# Totex_fcs benchmarking
+
+## section
+<h5>Totex (Flow of Capital Services) benchmarking</h5>
+
+The below presents all results for the Totex (Flow of Capital Services) benchmarking, for `r latest_year` or for the full period (`r overall_period`) with a cost normalised using as denominator:
+
+* icp50_line50
+* nb_connections
+* line_length
+
+This dashboard does not aim to present the same results for Opex, Capex or Totex, or any more granular cost, as this cost benchmarking is delivered already in this version of the [PAT](https://public.tableau.com/app/profile/commerce.commission/viz/Performanceaccessibilitytool2023-NewZealandelectricitydistributors-2023Update-draft/Homepage?publish=yes). This PAT update has been temporarily created to allow users to normalise any cost as per this analysis (including by the geometric mean of line_length and number of customers, i.e. icp50_line50). The next update of the PAT which will include the 2024 data is expected to also include these changes.
+
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
+             groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="nb_connections", 
+             groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length", 
+             groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+
+### overall period {.tabset}
+
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
+             groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="nb_connections", 
+             groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length", 
+             groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
+             groupby="PAT_peergroup", plot_disc_yr=latest_year, flipped_axes=F)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="nb_connections", 
+             groupby="PAT_peergroup", plot_disc_yr=latest_year, flipped_axes=F)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length", 
+             groupby="PAT_peergroup", plot_disc_yr=latest_year, flipped_axes=F)
+
+```
+
+
+### overall period {.tabset}
+
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
+             groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes=F)
+
+```
+
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="nb_connections", 
+             groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes=F)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length", 
+             groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes=F)
+
+```
+
+
+# Cost vs Network Utilisation
+
+<h5>Cost vs Network Utilisation</h5>
+
+The below visually explores the relationship of "Cost" with several definitions and standardisation, against "Network Utilisation". 
+
+No clear pattern or relationship seem to emerge from this analysis.
+
+As a reminder, the network utilisation data has been prepared as per the methodology described in this [dashboard](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation/). Let’s mention that Scanpower is fully missing as did not fill any data regarding substations’ peak load and capacity. Some other data issues and how it has been mitigated is covered in the other dashboard [(Data Issues tab)](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation/#data-issues).
+
+The data it uses is gathered at the substation level, from which capacity and peak loads are aggregated. Not only data challenges are encountered as schedules are not always thoroughly filled by network providers, but it's critical to mention that such methodology to assess overall network utilisation ignores the asynchronism of the peak loads as well as the ability for network providers to rebalance load between substations.
+
+Under these circumstances, hard to comment on whether the lack of identified patterns comes from noisy data, methodology limitations or actual lack of relationship between network utilisation and cost. This is inconclusive.
+
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+# Cost vs unplanned SAIDI
+
+<h5>Cost vs unplanned SAIDI</h5>
+
+The below visually explores the relationship of "Cost" with several definitions and standardisation, against unplanned SAIDI.
+
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+# Cost vs normalised SAIDI
+
+<h5>Cost vs normalised SAIDI (planned and unplanned)</h5>
+
+The below visually explores the relationship of "Cost" with several definitions and standardisation, against normalised SAIDI.
+Normalised SAIDI includes both planned and unplanned SAIDI as per ID definitions. The planned/unplanned breakdown is not available in ID data. The normalisation definition varies over time. To understand better the involved normalisations, the reader is invited to read DPP2, DPP3 and DPP4 reasons papers.
+Without going further into technical details:
+
+* The normalised unplanned SAIDI is scaled down from the unplanned SAIDI to account for major events
+* The normalised planned SAIDI is scaled down from the planned SAIDI when early notification criteria are met.
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```

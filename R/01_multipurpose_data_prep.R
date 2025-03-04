@@ -74,6 +74,22 @@ dt_nb_connections[, nb_connections := value]
 dt_nb_connections <- dt_nb_connections[, c("disc_yr", "edb", "nb_connections"), with=F]
 stopifnot(nrow(dt_nb_connections) == length(all_years) * 29)
 
+# extract unplanned saidi
+dt_unplanned_saidi <- dt[schedule == "SCHEDULE 10: REPORT ON NETWORK RELIABILITY" &
+                           description == "Class C (unplanned interruptions on the network)" & 
+                           sub_category == "SAIDI" & category == "SAIFI and SAIDI by class"]
+dt_unplanned_saidi[, unplanned_saidi := value]
+dt_unplanned_saidi <- dt_unplanned_saidi[, c("disc_yr", "edb", "unplanned_saidi"), with=F]
+stopifnot(nrow(dt_unplanned_saidi) == length(all_years) * 29)
+
+# extract normalised saidi
+dt_norm_saidi <- dt[schedule == "SCHEDULE 10: REPORT ON NETWORK RELIABILITY" &
+                      description=="Classes B & C (interruptions on the network)" & 
+                      sub_category == "SAIDI" & category == "Normalised SAIFI and SAIDI"]
+dt_norm_saidi[, norm_saidi := value]
+dt_norm_saidi <- dt_norm_saidi[, c("disc_yr", "edb", "norm_saidi"), with=F]
+stopifnot(nrow(dt_norm_saidi) == length(all_years) * 29)
+
 # dt_tmp <- data.table(edb=sort(unique(dt$edb)))
 # fwrite(dt_tmp, "data/edb_regulatorystatus_and_peergroup.csv")
 # table(dt[startsWith(edb, "Eastland")]$disc_yr)
@@ -84,7 +100,7 @@ dt_all <- merge(setorderv(unique(dt[, c("disc_yr", "edb"), with=F]), c("disc_yr"
                 dt_edb_info, by="edb")
 
 # below: merge all data together - perform basic check when adding one info
-dt_list <- list(dt_opex, dt_capex, dt_rab, dt_deprec, dt_line_length, dt_nb_connections)
+dt_list <- list(dt_opex, dt_capex, dt_rab, dt_deprec, dt_line_length, dt_nb_connections, dt_unplanned_saidi, dt_norm_saidi)
 for (i in 1:length(dt_list)) {
   expected_nrow <- nrow(dt_all)
   dt_all <- merge(dt_all, dt_list[[i]], by = c("disc_yr", "edb"))
