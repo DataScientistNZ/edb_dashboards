@@ -69,7 +69,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="page-layout-custom quarto-dashboard-content bslib-gap-spacing html-fill-container dashboard-scrolling quarto-dashboard-pages">  
 
 <div class="bslib-grid-item html-fill-item tab-content bslib-grid" data-layout="flow" style="display: grid; grid-template-rows: minmax(3em, 1fr); grid-auto-columns: minmax(0, 1fr);">
-<div id="introduction" class="dashboard-page tab-pane show active html-fill-item html-fill-container" data-scrolling="false" data-orientation="rows" aria-labelledby="tab-introduction">
+<div id="introduction" class="dashboard-page tab-pane show active html-fill-item html-fill-container" data-orientation="rows" data-scrolling="false" aria-labelledby="tab-introduction">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
 grid-auto-rows: minmax(0, 1fr);">
@@ -246,7 +246,7 @@ grid-auto-rows: minmax(0, 1fr);">
 <h5>
 Cost vs Network Utilisation
 </h5>
-<p>The below visually explores the relationship of “Cost” with several definitions and standardisation, against “Network Utilisation”.</p>
+<p>The below visually explores the relationship of “Cost” with several definitions, and standardisation, against “Network Utilisation”.</p>
 <p>No clear pattern or relationship seem to emerge from this analysis.</p>
 <p>As a reminder, the network utilisation data has been prepared as per the methodology described in this <a href="https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation/">dashboard</a>. Let’s mention that Scanpower is fully missing as did not fill any data regarding substations’ peak load and capacity. Some other data issues and how it has been mitigated is covered in the other dashboard <a href="https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation/#data-issues">(Data Issues tab)</a>.</p>
 <p>The data it uses is gathered at the substation level, from which capacity and peak loads are aggregated. Not only data challenges are encountered as schedules are not always thoroughly filled by network providers, but it’s critical to mention that such methodology to assess overall network utilisation ignores the asynchronism of the peak loads as well as the ability for network providers to rebalance load between substations.</p>
@@ -527,7 +527,7 @@ grid-auto-rows: minmax(0, 1fr);">
 <h5>
 Cost vs unplanned SAIDI
 </h5>
-<p>The below visually explores the relationship of “Cost” with several definitions and standardisation, against unplanned SAIDI.</p>
+<p>The below visually explores the relationship of “Cost” with several definitions, and standardisation, against unplanned SAIDI.</p>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
     <template>Expand</template>
@@ -804,9 +804,9 @@ grid-auto-rows: minmax(0, 1fr);">
 <h5>
 Cost vs normalised SAIDI (planned and unplanned)
 </h5>
-<p>The below visually explores the relationship of “Cost” with several definitions and standardisation, against normalised SAIDI. Normalised SAIDI includes both planned and unplanned SAIDI as per ID definitions. The planned/unplanned breakdown is not available in ID data. The normalisation definition varies over time. To understand better the involved normalisations, the reader is invited to read DPP2, DPP3 and DPP4 reasons papers. Without going further into technical details:</p>
+<p>The below visually explores the relationship of “Cost” with several definitions, and standardisation, against normalised SAIDI. Normalised SAIDI includes both planned and unplanned SAIDI as per ID definitions. The planned/unplanned breakdown is not available in ID data. The normalisation definition varies over time. To understand better the involved normalisation methodologies, the reader is invited to read DPP2, DPP3 and DPP4 reasons papers. Without going further into technical details:</p>
 <ul>
-<li>The normalised unplanned SAIDI is scaled down from the unplanned SAIDI to account for major events</li>
+<li>The normalised unplanned SAIDI is scaled down from the unplanned SAIDI to account for major events,</li>
 <li>The normalised planned SAIDI is scaled down from the planned SAIDI when early notification criteria are met.</li>
 </ul>
 </div>
