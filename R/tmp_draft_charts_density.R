@@ -8,14 +8,14 @@ dt <- fread("data/generic_purpose_edb_data.csv")
 latest_year <- max(dt$disc_yr)
 overall_period <- paste0(min(dt$disc_yr), "-", latest_year)
 
-y_numerator <- "totex_fcs"
-# y_denominator <- "nb_connections"
-y_denominator <- "icp50_line50"
-x_var <- "density"
-# x_var <- "nb_connections"
-# x_var <- "line_length"
-# x_var <- "icp50_line50"
-groupby <- "PAT_peergroup"
+# y_numerator <- "totex_fcs"
+# # y_denominator <- "nb_connections"
+# y_denominator <- "icp50_line50"
+# x_var <- "density"
+# # x_var <- "nb_connections"
+# # x_var <- "line_length"
+# # x_var <- "icp50_line50"
+# groupby <- "PAT_peergroup"
 
 plot_disc_yr <- latest_year
 # plot_disc_yr <- overall_period
@@ -46,7 +46,7 @@ my_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator, groupby, plo
 }
 
 # generic bar plot we'll keep using everywhere
-my_bar_gplot <- function(dt, y_numerator, y_denominator, groupby, plot_disc_yr) {
+my_bar_gplot <- function(dt, y_numerator, y_denominator, groupby, plot_disc_yr, flipped_axes=T) {
   dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator))
                             ][,  c("disc_yr", "edb", groupby, "metric"), with=F]
   dt_plot2 <- dt_plot[, .(metric = mean(metric)), 
@@ -57,19 +57,34 @@ my_bar_gplot <- function(dt, y_numerator, y_denominator, groupby, plot_disc_yr) 
   
   dt_plot <- dt_plot[order(my_order)]
   
-  ggplot(dt_plot[disc_yr == plot_disc_yr], aes(x = metric, y = reorder(edb, my_order, desc=T), fill = get(groupby))) +
-    geom_bar(stat = "identity", alpha=0.8, position = position_dodge()) + 
-    theme_minimal() +
+  if (flipped_axes) {
+    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
+           aes(x = metric, y = reorder(edb, my_order, desc=T), fill = get(groupby))) +
+      theme_minimal() + 
+      theme(
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.text.y = element_text(margin = margin(r = -8))
+      )
+  } else {
+    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
+                aes(y = metric, x = reorder(edb, my_order, desc=T), fill = get(groupby))) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+      theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(margin = margin(r = 8))
+      )
+  }
+  
+  p <- p + geom_bar(stat = "identity", alpha=0.8, position = position_dodge()) + 
     labs(
       title = paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"),
       x = "",
       y = "",
-      fill = "") + 
-    theme(
-      panel.grid.major.y = element_blank(),
-      panel.grid.minor.y = element_blank(),
-      axis.text.y = element_text(margin = margin(r = -8))
-    )
+      fill = "")
+  p
 }
 
 
@@ -95,6 +110,9 @@ my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator= "icp50_line50",
 my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator = "icp50_line50", 
                  groupby="PAT_peergroup", plot_disc_yr=overall_period)
 
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator = "icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=2023)
+
 my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator = "nb_connections", 
                  groupby="PAT_peergroup", plot_disc_yr=overall_period)
 
@@ -103,6 +121,17 @@ my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denomin
 
 my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="nb_connections", y_denominator = "line_length", 
                  groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="nb_connections", y_denominator = "icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length", 
+             groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
+             groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes = F)
+
+dt[disc_yr==2023]
 
 # dt_plot_agg <- dt_plot[disc_yr == plot_disc_yr, .(metric = mean(metric)), by=c(groupby)]
 # 
