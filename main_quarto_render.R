@@ -23,5 +23,8 @@ my_quarto_render <- function(input_file, ...){
 # my_quarto_render(file.path(
 #   here::here(), "quarto_dashboards/edb_peer_grouping/edb_peer_grouping.qmd"))
 
+# my_quarto_render(file.path(
+#   here::here(), "quarto_dashboards/edb_cost_analysis/edb_cost_analysis.qmd"))
+
 my_quarto_render(file.path(
-  here::here(), "quarto_dashboards/edb_cost_analysis/edb_cost_analysis.qmd"))
+  here::here(), "quarto_dashboards/edb_perf_areas/edb_perf_areas.qmd"))

@@ -1,5 +1,6 @@
 library(data.table)
 library(ggplot2)
+source("R/00_echarts.R")
 
 options(scipen=999)
 
@@ -46,9 +47,15 @@ my_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator, groupby, plo
 }
 
 # generic bar plot we'll keep using everywhere
-my_bar_gplot <- function(dt, y_numerator, y_denominator, groupby, plot_disc_yr, flipped_axes=T) {
-  dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator))
-                            ][,  c("disc_yr", "edb", groupby, "metric"), with=F]
+my_bar_gplot <- function(dt, y_numerator, y_denominator=NULL, groupby, plot_disc_yr, flipped_axes=T) {
+  
+  if (!is.null(y_denominator)) {
+    dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator))
+                              ][,  c("disc_yr", "edb", groupby, "metric"), with=F]
+  } else {
+    dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator))][,  c("disc_yr", "edb", groupby, "metric"), with=F]
+  }
+  
   dt_plot2 <- dt_plot[, .(metric = mean(metric)), 
                       by=c("edb", groupby)][, disc_yr := overall_period]
   dt_plot <- rbind(dt_plot, dt_plot2)
@@ -80,13 +87,19 @@ my_bar_gplot <- function(dt, y_numerator, y_denominator, groupby, plot_disc_yr, 
   
   p <- p + geom_bar(stat = "identity", alpha=0.8, position = position_dodge()) + 
     labs(
-      title = paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"),
+      # title = paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"),
       x = "",
       y = "",
       fill = "")
+  
+  if (!is.null(y_denominator)) {
+    p <- p + ggtitle(paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"))
+  } else {
+    p <- p + ggtitle(paste0(y_numerator, "   (", plot_disc_yr, ")"))
+  }
+  
   p
 }
-
 
 my_scatter_gplot(dt, x_var="density", y_numerator="opex", y_denominator = "icp50_line50", 
                  groupby="status", plot_disc_yr=overall_period)
@@ -130,6 +143,21 @@ my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length",
 
 my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
              groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes = F)
+
+my_bar_gplot(dt, y_numerator="network_utilisation",
+             groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes = T)
+
+field <- "network_utilisation"
+my_status <- "NonExempt"
+eplot_line(dt[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ") - curated"))
+
 
 dt[disc_yr==2023]
 

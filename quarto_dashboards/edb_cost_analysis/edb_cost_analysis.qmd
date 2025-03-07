@@ -141,7 +141,7 @@ my_bar_gplot <- function(dt, y_numerator, y_denominator, groupby, plot_disc_yr, 
 
 ## documentation content
 
-<h5>EDB Peer Grouping</h5>
+<h5>EDB Cost Analysis</h5>
   
 
 This dashboard aims to explore Electricity Distribution Businesses' data with the objective of comparatively analyse performance, with an emphasis on cost performance.
