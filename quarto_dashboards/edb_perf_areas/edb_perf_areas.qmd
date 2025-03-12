@@ -371,9 +371,10 @@ eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby 
 
 ```
 
-## section {width=34%}
+## section
 
 ```{r, echo=F}
+#| width: 34%
 
 my_peergroup <- "Small rural EDB"
 eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
@@ -388,1018 +389,444 @@ eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby 
 ```
 
 
-# Network Utilisation (to delete)
+# Vegetation management benchmark
 
 ## section
-<h5>Network Utilisation</h5>
+<h5>Vegetation management opex benchmark</h5>
 
-The below presents results for `r latest_year` or for the full period (`r overall_period`) with a cost normalised using as denominator:
+This content is already available in the [PAT](https://public.tableau.com/app/profile/commerce.commission/viz/Performanceaccessibilitytool2023-NewZealandelectricitydistributors-2023Update-draft/Homepage?publish=yes). This PAT update has been temporarily created to allow users to normalise any cost as per this analysis (including by the geometric mean of line_length and number of customers, i.e. icp50_line50). The next official update of the PAT which will include the 2024 data is expected to also include these changes.
+
+To create the corresponding benchmark, go to the opex tab, click on vegetation management expense, and pick the appropriate denominator (number of customer, line length or the combination of the two). You can also pick the grouping you think is appropriate. 
+
+
+# Vegetation management time series
+
+## section
+<h5>Vegetation management time series</h5>
+
+The below presents time series results with a cost normalised using as denominator:
 
 * icp50_line50
 * nb_connections
 * line_length
 
-
-## section
-
-### latest year {.tabset}
-
 ```{r, echo=F}
-#| title: per icp50_line50
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
-             groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="nb_connections", 
-             groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length", 
-             groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-
-### overall period {.tabset}
-
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
-             groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="nb_connections", 
-             groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length", 
-             groupby="PAT_peergroup", plot_disc_yr=overall_period)
+# ugly to save these fields like that but also more simple...
+field <- "veg_mgt_opex"
+dt[, (paste0(field, " / ", "icp50_line50")) := get(field) / icp50_line50]
+dt[, (paste0(field, " / ", "nb_connections")) := get(field) / nb_connections]
+dt[, (paste0(field, " / ", "line_length")) := get(field) / line_length]
 
 ```
 
 ## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
-             groupby="PAT_peergroup", plot_disc_yr=latest_year, flipped_axes=F)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="nb_connections", 
-             groupby="PAT_peergroup", plot_disc_yr=latest_year, flipped_axes=F)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length", 
-             groupby="PAT_peergroup", plot_disc_yr=latest_year, flipped_axes=F)
-
-```
-
-
-### overall period {.tabset}
-
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
-             groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes=F)
-
-```
-
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="nb_connections", 
-             groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes=F)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length", 
-             groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes=F)
-
-```
-
-# Cost vs Network Utilisation
-
-<h5>Cost vs Network Utilisation</h5>
-
-The below visually explores the relationship of "Cost" with several definitions, and standardisation, against "Network Utilisation". 
-
-No clear pattern or relationship seem to emerge from this analysis.
-
-As a reminder, the network utilisation data has been prepared as per the methodology described in this [dashboard](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation/). Let’s mention that Scanpower is fully missing as did not fill any data regarding substations’ peak load and capacity. Some other data issues and how it has been mitigated is covered in the other dashboard [(Data Issues tab)](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation/#data-issues).
-
-The data it uses is gathered at the substation level, from which capacity and peak loads are aggregated. Not only data challenges are encountered as schedules are not always thoroughly filled by network providers, but it's critical to mention that such methodology to assess overall network utilisation ignores the asynchronism of the peak loads as well as the ability for network providers to rebalance load between substations.
-
-Under these circumstances, hard to comment on whether the lack of identified patterns comes from noisy data, methodology limitations or actual lack of relationship between network utilisation and cost. This is inconclusive.
-
+<h5>Exempt & non Exempt grouping</h5>
 
 ## section
 
-### latest year {.tabset}
+### left {.tabset}
 
 ```{r, echo=F}
 #| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
+field <- paste0("veg_mgt_opex", " / ", "icp50_line50")
+my_status <- "NonExempt"
+eplot_line(dt[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
+field <- paste0("veg_mgt_opex", " / ", "nb_connections")
+my_status <- "NonExempt"
+eplot_line(dt[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
+field <- paste0("veg_mgt_opex", " / ", "line_length")
+my_status <- "NonExempt"
+eplot_line(dt[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ")"))
 ```
 
-### overall period {.tabset}
+
+### right {.tabset}
 
 ```{r, echo=F}
 #| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
+field <- paste0("veg_mgt_opex", " / ", "icp50_line50")
+my_status <- "Exempt"
+eplot_line(dt[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
+field <- paste0("veg_mgt_opex", " / ", "nb_connections")
+my_status <- "Exempt"
+eplot_line(dt[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="opex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
+field <- paste0("veg_mgt_opex", " / ", "line_length")
+my_status <- "Exempt"
+eplot_line(dt[status == my_status], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_status, ")"))
 ```
 
+## section
+<h5>PAT peer grouping</h5>
 
 ## section
 
-### latest year {.tabset}
+### left {.tabset}
 
 ```{r, echo=F}
 #| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
+field <- paste0("veg_mgt_opex", " / ", "icp50_line50")
+my_peergroup <- "Large EDB with major city"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
+field <- paste0("veg_mgt_opex", " / ", "nb_connections")
+my_peergroup <- "Large EDB with major city"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
+field <- paste0("veg_mgt_opex", " / ", "line_length")
+my_peergroup <- "Large EDB with major city"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
-### overall period {.tabset}
+### middle {.tabset}
 
 ```{r, echo=F}
 #| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
+field <- paste0("veg_mgt_opex", " / ", "icp50_line50")
+my_peergroup <- "Large EDB with secondary city"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
+field <- paste0("veg_mgt_opex", " / ", "nb_connections")
+my_peergroup <- "Large EDB with secondary city"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="capex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
+field <- paste0("veg_mgt_opex", " / ", "line_length")
+my_peergroup <- "Large EDB with secondary city"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
-
-## section
-
-### latest year {.tabset}
+### right {.tabset}
 
 ```{r, echo=F}
 #| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
+field <- paste0("veg_mgt_opex", " / ", "icp50_line50")
+my_peergroup <- "Medium regional EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
+field <- paste0("veg_mgt_opex", " / ", "nb_connections")
+my_peergroup <- "Medium regional EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
+field <- paste0("veg_mgt_opex", " / ", "line_length")
+my_peergroup <- "Medium regional EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ## section
 
-### latest year {.tabset}
+### left {.tabset}
 
 ```{r, echo=F}
 #| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
+field <- paste0("veg_mgt_opex", " / ", "icp50_line50")
+my_peergroup <- "Intermediate Regional EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
+field <- paste0("veg_mgt_opex", " / ", "nb_connections")
+my_peergroup <- "Intermediate Regional EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
+field <- paste0("veg_mgt_opex", " / ", "line_length")
+my_peergroup <- "Intermediate Regional EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
-### overall period {.tabset}
+### middle {.tabset}
 
 ```{r, echo=F}
 #| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
+field <- paste0("veg_mgt_opex", " / ", "icp50_line50")
+my_peergroup <- "Medium rural EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
+field <- paste0("veg_mgt_opex", " / ", "nb_connections")
+my_peergroup <- "Medium rural EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_services", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
+field <- paste0("veg_mgt_opex", " / ", "line_length")
+my_peergroup <- "Medium rural EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
-## section
-
-### latest year {.tabset}
+### right {.tabset}
 
 ```{r, echo=F}
 #| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
+field <- paste0("veg_mgt_opex", " / ", "icp50_line50")
+my_peergroup <- "Small underground EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
+field <- paste0("veg_mgt_opex", " / ", "nb_connections")
+my_peergroup <- "Small underground EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-
-# Cost vs unplanned SAIDI
-
-<h5>Cost vs unplanned SAIDI</h5>
-
-The below visually explores the relationship of "Cost" with several definitions, and standardisation, against unplanned SAIDI.
-
-
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="opex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="capex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
+field <- paste0("veg_mgt_opex", " / ", "line_length")
+my_peergroup <- "Small underground EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 
 ## section
 
-### latest year {.tabset}
+### left {width=34% .tabset}
 
 ```{r, echo=F}
 #| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
+field <- paste0("veg_mgt_opex", " / ", "icp50_line50")
+my_peergroup <- "Small rural EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
+field <- paste0("veg_mgt_opex", " / ", "nb_connections")
+my_peergroup <- "Small rural EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```
 
 ```{r, echo=F}
 #| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-
-# Cost vs normalised SAIDI
-
-<h5>Cost vs normalised SAIDI (planned and unplanned)</h5>
-
-The below visually explores the relationship of "Cost" with several definitions, and standardisation, against normalised SAIDI.
-Normalised SAIDI includes both planned and unplanned SAIDI as per ID definitions. The planned/unplanned breakdown is not available in ID data. The normalisation definition varies over time. To understand better the involved normalisation methodologies, the reader is invited to read DPP2, DPP3 and DPP4 reasons papers.
-Without going further into technical details:
-
-* The normalised unplanned SAIDI is scaled down from the unplanned SAIDI to account for major events,
-* The normalised planned SAIDI is scaled down from the planned SAIDI when early notification criteria are met.
-
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="capex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
+field <- paste0("veg_mgt_opex", " / ", "line_length")
+my_peergroup <- "Small rural EDB"
+eplot_line(dt[PAT_peergroup == my_peergroup], x = "disc_yr", y = field, groupby = "edb") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0(field, " (", my_peergroup, ")"))
 ```

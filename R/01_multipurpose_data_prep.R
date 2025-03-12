@@ -90,6 +90,29 @@ dt_norm_saidi[, norm_saidi := value]
 dt_norm_saidi <- dt_norm_saidi[, c("disc_yr", "edb", "norm_saidi"), with=F]
 stopifnot(nrow(dt_norm_saidi) == length(all_years) * 29)
 
+
+# extract unplanned saidi
+dt_veg_saidi <- dt[schedule == "SCHEDULE 10: REPORT ON NETWORK RELIABILITY" &
+                           description == "Vegetation" & 
+                           sub_category == "SAIDI" & category == "Cause"]
+dt_veg_saidi[, veg_saidi := value]
+dt_veg_saidi <- dt_veg_saidi[, c("disc_yr", "edb", "veg_saidi"), with=F]
+# stopifnot(nrow(dt_veg_saidi) == length(all_years) * 29)
+## issue detected: invercargill not giving data for a few years, we decide to assume it's zero
+dt_veg_saidi <- merge(dt_nb_connections, dt_veg_saidi, all.x=T) # add a few rows
+dt_veg_saidi[is.na(veg_saidi), veg_saidi := 0]
+dt_veg_saidi <- dt_veg_saidi[, c("disc_yr", "edb", "veg_saidi"), with=F]
+stopifnot(nrow(dt_veg_saidi) == length(all_years) * 29)
+
+# extract opex - vegetation management
+dt_veg_mgt_opex <- dt[schedule == "SCHEDULE 6b: REPORT ON OPERATIONAL EXPENDITURE FOR THE DISCLOSURE YEAR" &
+                         description == "Vegetation management"]
+dt_veg_mgt_opex[, veg_mgt_opex := value]
+dt_veg_mgt_opex <- dt_veg_mgt_opex[, c("disc_yr", "edb", "veg_mgt_opex"), with=F]
+# issue: some didn't fill vege management...
+dt_veg_mgt_opex[is.na(veg_mgt_opex), veg_mgt_opex := 0]
+stopifnot(nrow(dt_veg_mgt_opex) == length(all_years) * 29)
+
 # dt_tmp <- data.table(edb=sort(unique(dt$edb)))
 # fwrite(dt_tmp, "data/edb_regulatorystatus_and_peergroup.csv")
 # table(dt[startsWith(edb, "Eastland")]$disc_yr)
@@ -100,7 +123,8 @@ dt_all <- merge(setorderv(unique(dt[, c("disc_yr", "edb"), with=F]), c("disc_yr"
                 dt_edb_info, by="edb")
 
 # below: merge all data together - perform basic check when adding one info
-dt_list <- list(dt_opex, dt_capex, dt_rab, dt_deprec, dt_line_length, dt_nb_connections, dt_unplanned_saidi, dt_norm_saidi)
+dt_list <- list(dt_opex, dt_capex, dt_rab, dt_deprec, dt_line_length, dt_nb_connections, 
+                dt_unplanned_saidi, dt_norm_saidi, dt_veg_saidi, dt_veg_mgt_opex)
 for (i in 1:length(dt_list)) {
   expected_nrow <- nrow(dt_all)
   dt_all <- merge(dt_all, dt_list[[i]], by = c("disc_yr", "edb"))
@@ -152,6 +176,5 @@ dt_all <- merge(dt_all, dt_agg_clean[, c("edb", "disc_yr", "network_utilisation"
 ###############################################################################
 # Save overall prepared data
 fwrite(dt_all, file.path("data", "generic_purpose_edb_data.csv"))
-
 
 dt_all

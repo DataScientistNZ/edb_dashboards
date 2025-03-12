@@ -161,6 +161,14 @@ eplot_line(dt[status == my_status], x = "disc_yr", y = field, groupby = "edb") |
 
 dt[disc_yr==2023]
 
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="nb_connections", y_denominator = "icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+my_scatter_gplot(data.table(dt)[veg_saidi < 1, veg_saidi := 1][], x_var="veg_saidi", 
+                 y_numerator="veg_mgt_opex", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
 # dt_plot_agg <- dt_plot[disc_yr == plot_disc_yr, .(metric = mean(metric)), by=c(groupby)]
 # 
 # ggplot(dt_plot_agg, aes(x = metric, y = edb, fill = get(groupby))) +

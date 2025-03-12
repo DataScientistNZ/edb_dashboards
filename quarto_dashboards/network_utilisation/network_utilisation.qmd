@@ -58,6 +58,8 @@ More specifically, it uses data from the schedule "S12b.Capacity Forecast". The 
 * Current Peak Load (MVA)
 * Installed Firm Capacity (MVA)
 
+Scanpower is fully missing as did not fill any data regarding substations' peak load and capacity.
+
 The retained simplified methodology to quantify the overall network utilisation by EDBs is to aggregate the Current Peak Load of individual substations from an EDB, and to compare it to the aggregated Installed Firm Capacity. 
 
 It gives a reasonable picture of the overall network utilisation of EDBs only if both information have been filled accurately.
@@ -97,6 +99,8 @@ Two metrics, reported by all EDBs for all substations, are involved in this stud
 
 * Current Peak Load (MVA)
 * Installed Firm Capacity (MVA)
+
+Let's mention again that Scanpower is fully missing as did not fill any data regarding substations' peak load and capacity.
 
 While it appears that EDBs are listing their substations appropriately, it is common for some EDBs not to share the Installed Firm Capacity (either not filled or zero). While less common, it also occurs for the current peak load not to be filled.
 
