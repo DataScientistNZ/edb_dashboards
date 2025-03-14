@@ -1,0 +1,20 @@
+---
+title: "EDB Productivity Dashboards"
+format: 
+  html:
+    toc: false
+    html-math-method: katex
+    
+theme: cerulean
+---
+
+Welcome to the EDB Productivity webpage. You'll find a few useful links below.
+
+## Dashboards links
+
+<!-- Add below content programmatically for the indexing -->
+
+- [EDB cost performance analysis](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/edb_cost_analysis)
+- [EDB peer grouping](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/edb_peer_grouping)
+- [EDB performance areas](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/edb_perf_areas)
+- [EDB network utilisation](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation)

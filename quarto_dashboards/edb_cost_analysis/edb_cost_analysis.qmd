@@ -8,7 +8,7 @@ format:
     nav-buttons:
     - text: Home
       icon: list
-      href: https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/edb_cost_analysis
+      href: https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/
     - text: Code
       icon: github
       href: https://github.com/DataScientistNZ/edb_dashboards

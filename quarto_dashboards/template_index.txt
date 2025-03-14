@@ -1,0 +1,15 @@
+---
+title: "EDB Productivity Dashboards"
+format: 
+  html:
+    toc: false
+    html-math-method: katex
+    
+theme: cerulean
+---
+
+Welcome to the EDB Productivity webpage. You'll find a few useful links below.
+
+## Dashboards links
+
+<!-- Add below content programmatically for the indexing -->

@@ -16,14 +16,72 @@ my_quarto_render <- function(input_file, ...){
   output_file
 }
 
+# Function to extract title from a .qmd file
+extract_title <- function(file_path) {
+  # Read the first few lines to locate YAML block
+  lines <- readr::read_lines(file_path)
+  
+  # Extract the YAML content (lines between "---")
+  yaml_block <- lines[which(lines == "---")[1] + 1 : which(lines == "---")[2] - 1]
+  
+  # Parse YAML and extract the title field
+  yaml_content <- yaml::yaml.load(paste(yaml_block, collapse = "\n"))
+  return(yaml_content$title)
+}
+
+# create dashboard indexing qmd file
+create_index_qmd_file <- function(quarto_folder, template_qmd, hosting_link) {
+  
+  # add "/" at the end of the hosting link
+  hosting_link <- sub("/?$", "/", hosting_link)
+  
+  # find all qmd files in sub folders
+  qmd_files <- list.files(path = quarto_folder, pattern = "\\.qmd$", recursive = TRUE, full.names = TRUE)
+  qmd_files <- qmd_files[dirname(qmd_files) != quarto_folder]
+  
+  # Extract titles from all qmd files
+  titles <- sapply(qmd_files, extract_title)
+  
+  # extract links for qmd files
+  hosted_folders <- sub(paste0(".*/", basename(quarto_folder),"/"), "", dirname(qmd_files))
+  links <- paste0(hosting_link, basename(quarto_folder), "/", hosted_folders)
+  
+  # Ensure the titles and links are of the same length
+  stopifnot(length(titles) == length(links))
+  
+  template_content <- readLines(template_qmd)   # Read the template and copy its content
+  file_conn <- file(file.path(quarto_folder, "index.qmd"), "w")  # Open a connection to write to the output file
+  writeLines(template_content, file_conn) # Write the template content to the new file
+  
+  writeLines("", file_conn)
+  for (i in seq_along(titles)) {   # Add the links dynamically
+    line <- paste0("- [", titles[i], "](", links[i], ")")
+    writeLines(line, file_conn)
+  }
+  
+  close(file_conn)    # Close the file connection
+}
+
+quarto_folder <- file.path(here::here(), "quarto_dashboards")
+template_qmd <- file.path(quarto_folder, "template_index.txt")
+hosting_link <- "https://datascientistnz.github.io/edb_dashboards/"
+
+#######################
+# could detect and run them all at once...
 my_quarto_render(file.path(
   here::here(), "quarto_dashboards/network_utilisation/network_utilisation.qmd"))
 
 my_quarto_render(file.path(
   here::here(), "quarto_dashboards/edb_peer_grouping/edb_peer_grouping.qmd"))
 
-my_quarto_render(file.path(
-  here::here(), "quarto_dashboards/edb_cost_analysis/edb_cost_analysis.qmd"))
+# my_quarto_render(file.path(
+#   here::here(), "quarto_dashboards/edb_cost_analysis/edb_cost_analysis.qmd"))
+# 
+# my_quarto_render(file.path(
+#   here::here(), "quarto_dashboards/edb_perf_areas/edb_perf_areas.qmd"))
 
-my_quarto_render(file.path(
-  here::here(), "quarto_dashboards/edb_perf_areas/edb_perf_areas.qmd"))
+
+#######################
+create_index_qmd_file(quarto_folder, template_qmd, hosting_link)
+my_quarto_render(file.path(quarto_folder, "index.qmd"))
+
