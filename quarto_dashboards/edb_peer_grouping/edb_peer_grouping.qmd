@@ -40,7 +40,7 @@ round_all_numeric_values <- function(dt, digits=3, copy=T) {
 my_datatable <- function(dt, ..., digits=3) {
   DT::datatable(round_all_numeric_values(dt, digits=digits), ..., 
                 extensions = 'Buttons', options = list(
-                  dom = 'Bifrtp', buttons = c('copy', 'csv')))
+                  dom = 'Bftip', buttons = c('copy', 'csv')))
 }
 
 ```

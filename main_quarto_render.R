@@ -68,8 +68,8 @@ hosting_link <- "https://datascientistnz.github.io/edb_dashboards/"
 
 #######################
 # could detect and run them all at once...
-my_quarto_render(file.path(
-  here::here(), "quarto_dashboards/network_utilisation/network_utilisation.qmd"))
+# my_quarto_render(file.path(
+#   here::here(), "quarto_dashboards/network_utilisation/network_utilisation.qmd"))
 
 my_quarto_render(file.path(
   here::here(), "quarto_dashboards/edb_peer_grouping/edb_peer_grouping.qmd"))
@@ -81,7 +81,10 @@ my_quarto_render(file.path(
 #   here::here(), "quarto_dashboards/edb_perf_areas/edb_perf_areas.qmd"))
 
 
+my_quarto_render(file.path(
+  here::here(), "quarto_dashboards/simple_data_visualisation/simple_data_visualisation.qmd"))
+
 #######################
-create_index_qmd_file(quarto_folder, template_qmd, hosting_link)
-my_quarto_render(file.path(quarto_folder, "index.qmd"))
+# create_index_qmd_file(quarto_folder, template_qmd, hosting_link)
+# my_quarto_render(file.path(quarto_folder, "index.qmd"))
 
