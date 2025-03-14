@@ -1,0 +1,76 @@
+---
+title: "Simple data visualisation"
+format: 
+  dashboard:
+    scrolling: true 
+    # theme: lumen
+    # theme: flatly
+    nav-buttons:
+    - text: Home
+      icon: list
+      href: https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/
+    - text: Code
+      icon: github
+      href: https://github.com/DataScientistNZ/edb_dashboards
+
+editor: 
+  markdown: 
+    wrap: 72
+    
+fontsize: 13px
+---
+  
+```{r, echo=F}
+
+# round all numeric values to n digits (n=3 by default)
+# we do so to allow a nice display
+# makes a copy of the input data by default (use copy=F if undesired)
+round_all_numeric_values <- function(dt, digits=3, copy=T) {
+  if (copy) dt <- data.table(dt)
+  for (nm in names(dt)) {
+    if (is.numeric(dt[[nm]])) {
+      dt[, (nm) := round(get(nm), digits)]
+    }
+  }
+  dt
+}
+
+# custom made display of datatable
+# displaying a copy of the table (copy made in the rounding function)
+my_datatable <- function(dt, ..., digits=3) {
+  DT::datatable(round_all_numeric_values(dt, digits=digits), ..., 
+                extensions = 'Buttons', options = list(
+                  dom = 'Bftip', buttons = c('copy', 'csv')))
+}
+
+```
+
+# Data
+
+
+```{r, echo=F}
+
+# load resources and set common variables
+library(data.table)
+library(ggplot2)
+# source(file.path(here::here(), "R", "00_echarts.R"))
+options(scipen=999)
+
+# load prepared data
+dt <- fread(file.path(here::here(), "data", "generic_purpose_edb_data.csv"))
+
+# define generic descriptors
+latest_year <- max(dt$disc_yr)
+overall_period <- paste0(min(dt$disc_yr), "-", latest_year)
+
+```
+
+
+
+::: {.card title="Data"}
+
+```{r, echo=F}
+my_datatable(dt)
+```
+
+:::
