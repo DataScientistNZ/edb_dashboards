@@ -1383,7 +1383,3 @@ dt_wide <- dcast(my_dt, rowid(quadrant) ~ quadrant, value.var = "edb")
 my_datatable(dt_wide[, -"quadrant", with=F])
 ```
 
-
-
-
-```
