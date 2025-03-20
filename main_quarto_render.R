@@ -71,18 +71,18 @@ hosting_link <- "https://datascientistnz.github.io/edb_dashboards/"
 # my_quarto_render(file.path(
 #   here::here(), "quarto_dashboards/network_utilisation/network_utilisation.qmd"))
 
-my_quarto_render(file.path(
-  here::here(), "quarto_dashboards/edb_peer_grouping/edb_peer_grouping.qmd"))
-
 # my_quarto_render(file.path(
-#   here::here(), "quarto_dashboards/edb_cost_analysis/edb_cost_analysis.qmd"))
-# 
+#   here::here(), "quarto_dashboards/edb_peer_grouping/edb_peer_grouping.qmd"))
+
+my_quarto_render(file.path(
+  here::here(), "quarto_dashboards/edb_cost_analysis/edb_cost_analysis.qmd"))
+
 # my_quarto_render(file.path(
 #   here::here(), "quarto_dashboards/edb_perf_areas/edb_perf_areas.qmd"))
 
 
-my_quarto_render(file.path(
-  here::here(), "quarto_dashboards/simple_data_visualisation/simple_data_visualisation.qmd"))
+# my_quarto_render(file.path(
+#   here::here(), "quarto_dashboards/simple_data_visualisation/simple_data_visualisation.qmd"))
 
 #######################
 # create_index_qmd_file(quarto_folder, template_qmd, hosting_link)

@@ -52,7 +52,7 @@ my_datatable <- function(dt, ..., digits=3) {
 # load resources and set common variables
 library(data.table)
 library(ggplot2)
-# source(file.path(here::here(), "R", "00_echarts.R"))
+source(file.path(here::here(), "R", "00_adhoc_charts.R"))
 options(scipen=999)
 
 # load prepared data
@@ -62,80 +62,15 @@ dt <- fread(file.path(here::here(), "data", "generic_purpose_edb_data.csv"))
 latest_year <- max(dt$disc_yr)
 overall_period <- paste0(min(dt$disc_yr), "-", latest_year)
 
-# these charts should ideally be rewritten with echarts4r to facilitate reading
-# lack of time and priorities on quantity rather than quality means it's unlikely to
-# happen in the foreseeable future
-# define scatter chart we'll keep using everywhere
-my_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator, groupby, 
-                             plot_disc_yr, title=NULL) {
-  dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator), 
-                                   x = get(x_var))][,  c("disc_yr", "edb", groupby,
-                                                         "x", "metric"), with=F]
-  dt_plot2 <- dt_plot[, .(x = mean(x), metric = mean(metric)), 
-                      by=c("edb", groupby)][, disc_yr := overall_period]
-  dt_plot <- rbind(dt_plot, dt_plot2)
-  
-  p <- ggplot(dt_plot[disc_yr == plot_disc_yr],
-              aes(x = x, y = metric)) +
-    geom_point(aes(color=get(groupby)), size=2, alpha=0.8) +
-    theme_minimal() +
-    ylab(paste0(y_numerator, " / ", y_denominator)) + 
-    ylim(c(0, NA)) + 
-    xlab(x_var) +
-    ggrepel::geom_text_repel(aes(label=edb, color=get(groupby)), size=3, alpha=0.8, show.legend=FALSE) +
-    # geom_smooth(method = "lm", se = FALSE, color = "black", alpha=0.1) +
-    labs(title = "geom_text_repel()", alpha=0.8) +
-    theme(legend.title = element_blank())
-  if (!x_var %in% c("density")) p <- p + coord_trans(x='log10')
-  if (!is.null(title)) {
-    p <- p + ggtitle(title)
-  } else {
-    p <- p + ggtitle(paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"))
-  }
-  p
-}
 
-# define bar chart we'll keep using everywhere
-my_bar_gplot <- function(dt, y_numerator, y_denominator, groupby, plot_disc_yr, flipped_axes=T) {
-  dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator))
-                            ][,  c("disc_yr", "edb", groupby, "metric"), with=F]
-  dt_plot2 <- dt_plot[, .(metric = mean(metric)), 
-                      by=c("edb", groupby)][, disc_yr := overall_period]
-  dt_plot <- rbind(dt_plot, dt_plot2)
-  # hack to have desired order
-  dt_plot[ , my_order := match(get(groupby), sort(unique(dt_plot[[groupby]]))) * 1000000 + metric]
-  
-  dt_plot <- dt_plot[order(my_order)]
-  
-  if (flipped_axes) {
-    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
-           aes(x = metric, y = reorder(edb, my_order, desc=T), fill = get(groupby))) +
-      theme_minimal() + 
-      theme(
-        panel.grid.major.y = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        axis.text.y = element_text(margin = margin(r = -8))
-      )
-  } else {
-    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
-                aes(y = metric, x = reorder(edb, my_order, desc=T), fill = get(groupby))) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
-      theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(margin = margin(r = 8))
-      )
-  }
-  
-  p <- p + geom_bar(stat = "identity", alpha=0.8, position = position_dodge()) + 
-    labs(
-      title = paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"),
-      x = "",
-      y = "",
-      fill = "")
-  p
-}
+# Add average of any metric per edb over period
+time_ft <- "disc_yr"
+qualitative_constant_ft <- c("edb", "status", "PAT_peergroup")
+dt_edb_avg <- dt[, lapply(.SD, mean, na.rm = TRUE), by = qualitative_constant_ft, 
+                 .SDcols = setdiff(names(dt), c(time_ft, qualitative_constant_ft))]
+
+dt_edb_avg[, (time_ft) := overall_period]
+setcolorder(dt_edb_avg, names(dt)) 
 
 ```
 
@@ -309,6 +244,114 @@ my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="line_length",
 ```
 
 
+<!-- new stuff for Diego (2023 to allow comparison with MTFP / econometric) --> 
+## section
+
+### left 
+```{r, echo=F}
+#| title: 2023 focus to allow comparison with MTFP / econometric results
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
+             groupby="PAT_peergroup", plot_disc_yr=2023, flipped_axes=T)
+
+```
+
+
+### right
+```{r, echo=F}
+#| title: 2023 focus to allow comparison with MTFP / econometric results
+
+my_bar_gplot(dt, y_numerator="totex_fcs", y_denominator="icp50_line50", 
+             groupby="PAT_peergroup", plot_disc_yr=2023, flipped_axes=F)
+
+```
+
+<!-- new new stuff for Diego and Arik: bar chart with one bar per group --> 
+## section 
+
+```{r, echo=F}
+dt_avg_by_group <- dt[, lapply(.SD, mean, na.rm = TRUE), by = c("disc_yr", "PAT_peergroup"), 
+                      .SDcols = setdiff(names(dt), c("disc_yr", "edb", "status", "PAT_peergroup"))]
+
+
+# define bar chart we'll keep using everywhere
+my_bar_gplot_hacked <- function(dt, y_numerator, y_denominator=NULL, groupby, plot_disc_yr, flipped_axes=T) {
+  
+  if (!is.null(y_denominator)) {
+    dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator))
+    ][,  c("disc_yr", groupby, "metric"), with=F]
+  } else {
+    dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator))][,  c("disc_yr", groupby, "metric"), with=F]
+  }
+  
+  dt_plot2 <- dt_plot[, .(metric = mean(metric)), 
+                      by=c(groupby)][, disc_yr := overall_period]
+  dt_plot <- rbind(dt_plot, dt_plot2)
+  # hack to have desired order
+  dt_plot[ , my_order := match(get(groupby), sort(unique(dt_plot[[groupby]]))) * 1000000 + metric]
+  
+  dt_plot <- dt_plot[order(my_order)]
+  
+  if (flipped_axes) {
+    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
+                aes(x = metric, y = get(groupby), fill = get(groupby))) +
+      theme_minimal() + 
+      theme(
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.text.y = element_text(margin = margin(r = -8))
+      )
+  } else {
+    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
+                aes(y = metric, x = groupby, fill = get(groupby))) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+      theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(margin = margin(r = 8))
+      )
+  }
+  
+  p <- p + geom_bar(stat = "identity", alpha=0.9, position = position_dodge()) + 
+    labs(
+      # title = paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"),
+      x = "",
+      y = "",
+      fill = "")
+  
+  if (!is.null(y_denominator)) {
+    p <- p + ggtitle(paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"))
+  } else {
+    p <- p + ggtitle(paste0(y_numerator, "   (", plot_disc_yr, ")"))
+  }
+  
+  p
+}
+
+```
+
+### left
+```{r, echo=F}
+#| title: One bar per group
+
+my_bar_gplot_hacked(dt_avg_by_group, y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                    groupby="PAT_peergroup", plot_disc_yr=latest_year, flipped_axes=T)
+
+```
+
+
+
+### right 
+```{r, echo=F}
+#| title: One bar per group
+
+my_bar_gplot_hacked(dt_avg_by_group, y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                    groupby="PAT_peergroup", plot_disc_yr=overall_period, flipped_axes=T)
+
+```
+
+
 # Cost vs Network Utilisation
 
 <h5>Cost vs Network Utilisation</h5>
@@ -323,6 +366,62 @@ The data it uses is gathered at the substation level, from which capacity and pe
 
 Under these circumstances, hard to comment on whether the lack of identified patterns comes from noisy data, methodology limitations or actual lack of relationship between network utilisation and cost. This is inconclusive.
 
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
 
 ## section
 
@@ -551,61 +650,6 @@ my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="flow_capital_serv
 
 ```
 
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
 
 
 # Cost vs unplanned SAIDI
@@ -614,6 +658,62 @@ my_scatter_gplot(dt, x_var="network_utilisation", y_numerator="totex_fcs", y_den
 
 The below visually explores the relationship of "Cost" with several definitions, and standardisation, against unplanned SAIDI.
 
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
 
 ## section
 
@@ -841,61 +941,6 @@ my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="flow_capital_services
 
 ```
 
-## section
-
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="unplanned_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
 
 
 # Cost vs normalised SAIDI
@@ -916,6 +961,62 @@ Without going further into technical details:
 ```{r, echo=F}
 #| title: per icp50_line50
 
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
+
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per line_length
+
+my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: per icp50_line50
+
 my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="opex", y_denominator="icp50_line50", 
                  groupby="PAT_peergroup", plot_disc_yr=latest_year)
 
@@ -1135,61 +1236,7 @@ my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="flow_capital_services", y_
 
 ```
 
-## section
 
-### latest year {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=latest_year)
-
-```
-
-### overall period {.tabset}
-
-```{r, echo=F}
-#| title: per icp50_line50
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="icp50_line50", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
-
-```{r, echo=F}
-#| title: per nb_connections
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="nb_connections", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-
-```
-
-```{r, echo=F}
-#| title: per line_length
-
-my_scatter_gplot(dt, x_var="norm_saidi", y_numerator="totex_fcs", y_denominator="line_length", 
-                 groupby="PAT_peergroup", plot_disc_yr=overall_period)
-
-```
 
 # Vegetation cost
 
@@ -1257,5 +1304,86 @@ my_scatter_gplot(data.table(dt)[veg_saidi < 1, veg_saidi := 1][], x_var="veg_sai
 
 my_scatter_gplot(data.table(dt)[veg_saidi < 1, veg_saidi := 1][], x_var="veg_saidi", y_numerator="veg_mgt_opex", y_denominator="line_length", 
                  groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+# Quality quadrants
+
+## section
+
+The presumed cost vs quality trade-off can be displayed in terms of quadrants.
+We arbitrarily split EDBs at the median value for both the cost and the quality, forming four quadrants:
+
+* bottom left: low cost high reliability - presumed good value for consumers
+* top right: high cost low reliability - presumed poor value for consumers 
+* bottom right: low cost low reliability 
+* top left: high cost high reliability
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: quadrant chart
+my_dt <- data.table(dt[disc_yr == latest_year])
+x_median_val <- median(my_dt[["unplanned_saidi"]], na.rm = T)
+y_median_val <- median(my_dt[["totex_fcs"]]/my_dt[["icp50_line50"]], na.rm = T)
+my_simple_scatter_gplot(my_dt, x_var="unplanned_saidi", y_numerator="totex_fcs", 
+                        y_denominator="icp50_line50", groupby="PAT_peergroup") +
+  labs(subtitle = latest_year) + 
+  scale_y_continuous() +
+  geom_vline(xintercept = x_median_val, linetype = "dashed", color = "black") + 
+  geom_hline(yintercept = y_median_val, linetype = "dashed", color = "black") 
+```
+
+```{r, echo=F}
+#| title: data
+my_dt[unplanned_saidi > x_median_val, x_cat := "low reliability"]
+my_dt[unplanned_saidi <= x_median_val, x_cat := "high reliability"]
+my_dt[totex_fcs / icp50_line50 > y_median_val, y_cat := "high cost"]
+my_dt[totex_fcs / icp50_line50 <= y_median_val, y_cat := "low cost"]
+my_dt[, quadrant := paste0(y_cat, " | ", x_cat)]
+my_datatable(my_dt[, c("edb", "quadrant"), with=F])
+```
+
+```{r, echo=F}
+#| title: pivoted data
+dt_wide <- dcast(my_dt, rowid(quadrant) ~ quadrant, value.var = "edb")
+my_datatable(dt_wide[, -"quadrant", with=F])
+```
+
+### overall period {.tabset}
+
+```{r, echo=F}
+#| title: quadrant chart
+my_dt <- data.table(dt_edb_avg[disc_yr == overall_period])
+x_median_val <- median(my_dt[["unplanned_saidi"]], na.rm = T)
+y_median_val <- median(my_dt[["totex_fcs"]]/my_dt[["icp50_line50"]], na.rm = T)
+my_simple_scatter_gplot(my_dt, x_var="unplanned_saidi", y_numerator="totex_fcs", 
+                        y_denominator="icp50_line50", groupby="PAT_peergroup") +
+  labs(subtitle = overall_period) + 
+  scale_y_continuous() +
+  geom_vline(xintercept = x_median_val, linetype = "dashed", color = "black") + 
+  geom_hline(yintercept = y_median_val, linetype = "dashed", color = "black") 
+```
+
+```{r, echo=F}
+#| title: data
+my_dt[unplanned_saidi > x_median_val, x_cat := "low reliability"]
+my_dt[unplanned_saidi <= x_median_val, x_cat := "high reliability"]
+my_dt[totex_fcs / icp50_line50 > y_median_val, y_cat := "high cost"]
+my_dt[totex_fcs / icp50_line50 <= y_median_val, y_cat := "low cost"]
+my_dt[, quadrant := paste0(y_cat, " | ", x_cat)]
+my_datatable(my_dt[, c("edb", "quadrant"), with=F])
+```
+
+```{r, echo=F}
+#| title: pivoted data
+dt_wide <- dcast(my_dt, rowid(quadrant) ~ quadrant, value.var = "edb")
+my_datatable(dt_wide[, -"quadrant", with=F])
+```
+
+
+
 
 ```

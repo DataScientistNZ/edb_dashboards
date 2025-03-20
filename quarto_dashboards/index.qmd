@@ -10,7 +10,12 @@ theme: cerulean
 
 Welcome to the EDB Productivity webpage. You'll find a few useful links below.
 
-## Dashboards links
+## Previous work - Productivity benchmarking
+
+* [MTFP benchmarking](https://datascientistnz.github.io/edb_productivity_dashboard/quarto/mtfp/)
+* [econometrics benchmarking](https://datascientistnz.github.io/edb_productivity_dashboard/quarto/cobb_douglas_frontier/)
+
+## New approach - Simple metric comparison
 
 <!-- Add below content programmatically for the indexing -->
 

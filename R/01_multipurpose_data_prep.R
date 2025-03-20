@@ -172,8 +172,8 @@ dt_agg_clean[, "network_utilisation" := peak / capacity]
 # care, we don't seem to have scanpower data for network utilisation at all... that sucks
 dt_all <- merge(dt_all, dt_agg_clean[, c("edb", "disc_yr", "network_utilisation"), with=F], all.x=T)
 
-
 ###############################################################################
+
 # Save overall prepared data
 fwrite(dt_all, file.path("data", "generic_purpose_edb_data.csv"))
 
