@@ -43,6 +43,12 @@ dt_capex <- dt_capex[, c("disc_yr", "edb", "capex"), with=F]
 stopifnot(nrow(dt_capex) == length(all_years) * 29)
 
 
+dt_revenue <- dt[schedule == "SCHEDULE 3: REPORT ON REGULATORY PROFIT" &
+                   category == "Total regulatory income" & description == "Total regulatory income"]
+dt_revenue[, revenue := value * 1000]
+dt_revenue <- dt_revenue[, c("disc_yr", "edb", "revenue"), with=F]
+stopifnot(nrow(dt_revenue) == length(all_years) * 29)
+
 # extract rab
 dt_rab <- dt[schedule == "SCHEDULE 4: REPORT ON VALUE OF THE REGULATORY ASSET BASE (ROLLED FORWARD)" & 
                  category == "Total opening RAB value" & sub_category == "RAB"]
@@ -66,6 +72,13 @@ dt_line_length[, line_length := value]
 dt_line_length <- dt_line_length[, c("disc_yr", "edb", "line_length"), with=F]
 stopifnot(nrow(dt_line_length) == length(all_years) * 29)
 
+### extract overhead length
+dt_overhead_length <- dt[schedule == "SCHEDULE 9c: REPORT ON OVERHEAD LINES AND UNDERGROUND CABLES" &
+                       description == "Total circuit length (for supply)" &
+                       sub_category == "Overhead (km)"]
+dt_overhead_length[, overhead_length := value]
+dt_overhead_length <- dt_overhead_length[, c("disc_yr", "edb", "overhead_length"), with=F]
+stopifnot(nrow(dt_overhead_length) == length(all_years) * 29)
 
 # extract nb of customers
 dt_nb_connections <- dt[schedule == "SCHEDULE 8: REPORT ON BILLED QUANTITIES AND LINE CHARGE REVENUES" &
@@ -104,14 +117,37 @@ dt_veg_saidi[is.na(veg_saidi), veg_saidi := 0]
 dt_veg_saidi <- dt_veg_saidi[, c("disc_yr", "edb", "veg_saidi"), with=F]
 stopifnot(nrow(dt_veg_saidi) == length(all_years) * 29)
 
+# extract unplanned saidi
+dt_veg_saifi <- dt[schedule == "SCHEDULE 10: REPORT ON NETWORK RELIABILITY" &
+                     description == "Vegetation" & 
+                     sub_category == "SAIFI" & category == "Cause"]
+dt_veg_saifi[, veg_saifi := value]
+dt_veg_saifi <- dt_veg_saifi[, c("disc_yr", "edb", "veg_saifi"), with=F]
+# stopifnot(nrow(dt_veg_saifi) == length(all_years) * 29)
+## issue detected: invercargill not giving data for a few years, we decide to assume it's zero
+dt_veg_saifi <- merge(dt_nb_connections, dt_veg_saifi, all.x=T) # add a few rows
+dt_veg_saifi[is.na(veg_saifi), veg_saifi := 0]
+dt_veg_saifi <- dt_veg_saifi[, c("disc_yr", "edb", "veg_saifi"), with=F]
+stopifnot(nrow(dt_veg_saifi) == length(all_years) * 29)
+
+
 # extract opex - vegetation management
 dt_veg_mgt_opex <- dt[schedule == "SCHEDULE 6b: REPORT ON OPERATIONAL EXPENDITURE FOR THE DISCLOSURE YEAR" &
                          description == "Vegetation management"]
-dt_veg_mgt_opex[, veg_mgt_opex := value]
+dt_veg_mgt_opex[, veg_mgt_opex := value * 1000]
 dt_veg_mgt_opex <- dt_veg_mgt_opex[, c("disc_yr", "edb", "veg_mgt_opex"), with=F]
 # issue: some didn't fill vege management...
 dt_veg_mgt_opex[is.na(veg_mgt_opex), veg_mgt_opex := 0]
 stopifnot(nrow(dt_veg_mgt_opex) == length(all_years) * 29)
+
+# extract opex - Service interruptions and emergencies
+dt_outages_opex <- dt[schedule == "SCHEDULE 6b: REPORT ON OPERATIONAL EXPENDITURE FOR THE DISCLOSURE YEAR" & 
+                              description == "Service interruptions and emergencies"]
+dt_outages_opex[, outages_opex := value * 1000]
+dt_outages_opex <- dt_outages_opex[, c("disc_yr", "edb", "outages_opex"), with=F]
+stopifnot(nrow(dt_outages_opex) == length(all_years) * 29)
+
+###################################################################################
 
 # dt_tmp <- data.table(edb=sort(unique(dt$edb)))
 # fwrite(dt_tmp, "data/edb_regulatorystatus_and_peergroup.csv")
@@ -123,8 +159,9 @@ dt_all <- merge(setorderv(unique(dt[, c("disc_yr", "edb"), with=F]), c("disc_yr"
                 dt_edb_info, by="edb")
 
 # below: merge all data together - perform basic check when adding one info
-dt_list <- list(dt_opex, dt_capex, dt_rab, dt_deprec, dt_line_length, dt_nb_connections, 
-                dt_unplanned_saidi, dt_norm_saidi, dt_veg_saidi, dt_veg_mgt_opex)
+dt_list <- list(dt_opex, dt_capex, dt_revenue, dt_rab, dt_deprec, dt_nb_connections, dt_line_length, 
+                dt_overhead_length,  dt_unplanned_saidi, dt_norm_saidi, dt_veg_saidi, dt_veg_saifi, 
+                dt_veg_mgt_opex, dt_outages_opex)
 for (i in 1:length(dt_list)) {
   expected_nrow <- nrow(dt_all)
   dt_all <- merge(dt_all, dt_list[[i]], by = c("disc_yr", "edb"))
@@ -178,3 +215,15 @@ dt_all <- merge(dt_all, dt_agg_clean[, c("edb", "disc_yr", "network_utilisation"
 fwrite(dt_all, file.path("data", "generic_purpose_edb_data.csv"))
 
 dt_all
+
+
+# data.table(dt_all)[disc_yr >= 2015, .(vege_ratio = weighted.mean(veg_mgt_opex*1000/opex, w=rab_open)), by="disc_yr"]
+# data.table(dt_all)[disc_yr >= 2015, .(vege_ratio = weighted.mean(veg_mgt_opex*1000/opex, w=rab_open))]
+# data.table(dt_all)[disc_yr >= 2015, .(vege_ratio = weighted.mean(veg_mgt_opex*1000/opex, w=revenue)), by="disc_yr"]
+# data.table(dt_all)[disc_yr >= 2015, .(vege_ratio = weighted.mean(veg_mgt_opex*1000/opex, w=revenue))]
+# 
+# 
+# data.table(dt_all)[disc_yr >= 2015, .(vege_ratio = weighted.mean(veg_mgt_opex*1000/revenue, w=rab_open)), by="disc_yr"]
+# data.table(dt_all)[disc_yr >= 2015, .(vege_ratio = weighted.mean(veg_mgt_opex*1000/revenue, w=rab_open))]
+# data.table(dt_all)[disc_yr >= 2015, .(vege_ratio = weighted.mean(veg_mgt_opex*1000/revenue, w=revenue)), by="disc_yr"]
+# data.table(dt_all)[disc_yr >= 2015, .(vege_ratio = weighted.mean(veg_mgt_opex*1000/revenue, w=revenue))]

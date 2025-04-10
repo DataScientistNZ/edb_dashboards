@@ -24,3 +24,4 @@ Welcome to the EDB Productivity webpage. You'll find a few useful links below.
 - [EDB performance areas](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/edb_perf_areas)
 - [EDB network utilisation](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/network_utilisation)
 - [Simple data visualisation](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/simple_data_visualisation)
+- [EDB vegetation management analysis](https://datascientistnz.github.io/edb_dashboards/quarto_dashboards/vegetation_management)

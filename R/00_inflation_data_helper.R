@@ -1,7 +1,7 @@
 library(data.table)
 
 # load helper functions
-source("R/00_snowflake_helpers.R")
+source("R/00_snowflake_helper.R")
 
 get_inflation_data <- function(inflation_label=NULL, quarter_filter=NULL, min_year=NULL) {
   
@@ -64,9 +64,12 @@ get_inflation_real_factor <- function(inflation_label, quarter, base_year=NULL, 
   dt[, (nm) := index[year==base_year]/index][, c("year", nm), with=F]
 }
 
-# get_inflation_index("cpi")
-# get_inflation_index("cpi", quarter=3, min_year=2020)
-# get_inflation_real_factor("cpi", quarter=1)
-# get_inflation_real_factor("cpi", quarter=3, min_year=2010, base_year=2020)
-# get_inflation_annual_rate("cpi", min_year=2010)
-# get_inflation_annual_rate("cpi",quarter_filter=2)
+get_inflation_index("cpi")
+get_inflation_index("cpi", quarter=3, min_year=2020)
+get_inflation_real_factor("cpi", quarter=1)
+get_inflation_real_factor("cpi", quarter=3, min_year=2010, base_year=2020)
+get_inflation_annual_rate("cpi", min_year=2010)
+get_inflation_annual_rate("cpi",quarter_filter=2)
+
+
+get_inflation_index("lci_all", quarter=3, min_year=2020)

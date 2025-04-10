@@ -7,7 +7,7 @@ source(file.path(here::here(), "R/00_echarts.R"))
 # happen in the foreseeable future
 # define scatter chart we'll keep using everywhere
 my_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator=NULL, groupby, 
-                             plot_disc_yr, title=NULL) {
+                             plot_disc_yr, title=NULL, x_log_scale=T) {
   
   if (!is.null(y_denominator)) {
     dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator), 
@@ -32,7 +32,7 @@ my_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator=NULL, groupby
     # geom_smooth(method = "lm", se = FALSE, color = "black", alpha=0.1) +
     labs(title = "geom_text_repel()", alpha=0.8) +
     theme(legend.title = element_blank())
-  if (!x_var %in% c("density")) p <- p + coord_trans(x='log10')
+  if (!x_var %in% c("density") & x_log_scale) p <- p + coord_trans(x='log10')
 
   if (!is.null(y_denominator)) {
     p <- p + ylab(paste0(y_numerator, " / ", y_denominator))
@@ -108,10 +108,10 @@ my_bar_gplot <- function(dt, y_numerator, y_denominator=NULL, groupby, plot_disc
   p
 }
 
-# simplified version of the scatter plot that don't make as muc assumption
+# simplified version of the scatter plot that don't make as many assumptions
 # was necessary to deal with modifying obtained plot
 my_simple_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator=NULL, groupby, 
-                                    title=NULL) {
+                                    title=NULL, x_log_scale=T) {
   
   if (!is.null(y_denominator)) {
     dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator), 
@@ -132,7 +132,7 @@ my_simple_scatter_gplot <- function(dt, x_var, y_numerator, y_denominator=NULL, 
     # geom_smooth(method = "lm", se = FALSE, color = "black", alpha=0.1) +
     labs(title = "geom_text_repel()", alpha=0.8) +
     theme(legend.title = element_blank())
-  if (!x_var %in% c("density")) p <- p + coord_trans(x='log10')
+  if (!x_var %in% c("density") & x_log_scale) p <- p + coord_trans(x='log10')
   
   if (!is.null(y_denominator)) {
     p <- p + ylab(paste0(y_numerator, " / ", y_denominator))
