@@ -90,9 +90,18 @@ my_vsimple_scatter_gplot(dt_plot[disc_yr == overall_period],
                          x_var="overhead_length", y_var="veg_mgt_opex", 
                          groupby="PAT_peergroup", size_var = "veg_mgt_opex / icp", x_log_scale = T)
 
+dt_plot[, veg_saidi_next := lag(veg_saidi, 1)]
+dt_plot[, veg_saifi_next := lag(veg_saifi, 1)]
+
+dt_plot[, veg_saifi_next_next := lag(veg_saifi, 2)]
+dt_plot[, veg_saifi_next_next_next := lag(veg_saifi, 3)]
+
 
 
 summary(glm(data=dt_plot, formula="veg_mgt_opex / overhead_length ~ veg_saifi + edb"))
+summary(glm(data=dt_plot, formula="veg_mgt_opex / overhead_length ~ veg_saifi_next + edb"))
+summary(glm(data=dt_plot, formula="veg_mgt_opex / overhead_length ~ veg_saifi_next_next + edb"))
+summary(glm(data=dt_plot, formula="veg_mgt_opex / overhead_length ~ veg_saifi_next_next_next + edb"))
 summary(glm(data=dt_plot, formula="veg_mgt_opex  ~ veg_saifi + overhead_length + edb"))
 summary(glm(data=dt_plot, formula="veg_mgt_opex  ~ veg_saifi + overhead_length"))
 
@@ -110,6 +119,115 @@ summary(glm(data=dt_plot, formula="veg_mgt_opex  ~ veg_saidi + line_length + edb
 summary(glm(data=dt_plot, formula="veg_mgt_opex  ~ veg_saidi + line_length"))
 
 sapply(unique(dt_plot$edb), function(edb_nm) cor(
-  dt_plot$`veg_mgt_opex/overhead_length`,dt_plot$veg_mgt_opex))
+  dt_plot[edb==edb_nm]$`veg_mgt_opex/overhead_length`,dt_plot[edb==edb_nm]$veg_saifi))
 
-       
+
+sapply(setdiff(unique(dt_plot$edb), "Electricity Invercargill"), function(edb_nm) cor(
+  +   dt_plot[edb==edb_nm]$`veg_mgt_opex/overhead_length`,dt_plot[edb==edb_nm]$veg_saifi))
+
+
+
+dt_tmp <- data.table(dt)
+setorderv(dt_tmp, c("edb", "disc_yr"), order=-1)
+dt_tmp[, `:=`(veg_saifi_next1 = lag(veg_saifi, 1),
+              veg_saifi_next2 = lag(veg_saifi, 2), 
+              veg_saifi_next3 = lag(veg_saifi, 3), 
+              veg_saifi_next4 = lag(veg_saifi, 4)), by="edb"]
+# should we remove late years (missing anyway for lagged variables to compare more fairly?)
+# dt_tmp <- dt_tmp[disc_yr %in% sort(unique(dt$disc_yr))[1:(length(unique(dt$disc_yr))-4)]]
+setorderv(dt_tmp, c("edb", "disc_yr"), order=1)
+# dt_tmp[edb == "Aurora Energy"]
+
+ft_nm <- "veg_saifi"
+cor_res <- sapply(unique(dt_tmp$edb), function(edb_nm) cor(
+  dt_tmp[edb==edb_nm]$`veg_mgt_opex`/dt_tmp[edb==edb_nm]$`overhead_length`,
+  dt_tmp[edb==edb_nm][[ft_nm]], use = "pairwise.complete.obs"))
+dt_cor <- data.table(edb=names(cor_res), my_ft_nm=cor_res)
+setnames(dt_cor, "my_ft_nm", ft_nm)
+for (ft_nm in c("veg_saifi_next1", "veg_saifi_next2", "veg_saifi_next3", "veg_saifi_next4")) {
+  cor_res <- sapply(unique(dt_tmp$edb), function(edb_nm) cor(
+    dt_tmp[edb==edb_nm]$`veg_mgt_opex`/dt_tmp[edb==edb_nm]$`overhead_length`,
+    dt_tmp[edb==edb_nm][[ft_nm]], use = "pairwise.complete.obs"))
+  dt_cor_tmp <- data.table(edb=names(cor_res), my_ft_nm=cor_res)
+  setnames(dt_cor_tmp, "my_ft_nm", ft_nm)
+  dt_cor <- merge(dt_cor, dt_cor_tmp)
+  
+}
+
+dt_cor_long <- melt(dt_cor, id.vars = "edb", 
+                    variable.name = "measure", 
+                    value.name = "correlation")
+
+# Reverse the order of edb
+dt_cor_long$edb <- factor(dt_cor_long$edb, levels = rev(unique(dt_cor_long$edb)))
+# dt_cor_long <- dt_cor_long[!is.na(correlation)] # rm invercargill as always 0 veg_saifi
+
+
+ggplot(dt_cor_long, aes(measure, edb)) +
+  geom_tile(aes(fill = correlation)) +
+  geom_text(aes(label = round(correlation, 2))) +
+  theme_minimal() +
+  scale_fill_gradient2(low = "deepskyblue3", mid = "white", high = "brown2", midpoint = 0)
+
+
+
+
+dt_cor_long[, .(mean = mean(correlation, na.rm=T)), by=c("measure")]
+
+edb_nm <- "Nelson Electricity"
+
+
+summary(glm(data=dt, formula="veg_mgt_opex  ~ veg_saifi + PAT_peergroup + overhead_length"))
+
+summary(glm(data=dt, formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi)) + PAT_peergroup "))
+
+
+summary(glm(data=dt[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi))], 
+            formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi)) + I(log(PAT_peergroup))"))
+
+
+dt[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi))]
+dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi))]
+
+summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0], 
+            formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi)) + edb"))
+summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & !is.na(veg_saifi_next1)], 
+            formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi_next1)) + edb"))
+
+summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next1)) &
+                          veg_saifi_next1 != 0], 
+            formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi_next1)) + edb"))
+
+summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
+                          veg_saifi_next2 != 0], 
+            formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi_next2)) + edb"))
+
+summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
+                          veg_saifi_next2 != 0], 
+            formula="I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2) + edb"))
+
+summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
+                          veg_saifi_next2 != 0], 
+            formula="I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2)"))
+
+estimatr::lm_robust(as.formula("I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2) + edb"), 
+          data = dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
+                          veg_saifi_next2 != 0], se_type='HC0')
+
+
+dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next1))]$veg_saifi_next1
+
+
+
+# 
+# ?scale_fill_gradient()
+# 
+# edb_nm <- "Aurora Energy"
+# edb_nm <- "Electricity Invercargill"
+# 
+# dt_tmp[edb== "Aurora Energy"]
+
+# cor(c(1,2,3,4), c(1,3,7,NA), use = "pairwise.complete.obs")
+# cor(c(1,2,3), c(1,3,7), use = "pairwise.complete.obs")
+
+

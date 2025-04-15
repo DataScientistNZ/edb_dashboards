@@ -839,3 +839,330 @@ my_datatable(dt_wide[, -"quadrant", with=F])
 ```
 
 
+# Causality Analysis [part 1]
+
+## section
+
+### left
+
+<h4>More Vegetation expenses: less interruptions due to vegetation?</h4>
+
+<br> 
+
+Investing in vegetation management is generally expected to help EDBs reduce both SAIFI (outage frequency) and SAIDI (outage duration) by minimising tree-related faults. Clearing vegetation near power lines lowers the risk of disruptions, potentially improving network reliability and service continuity.
+
+In this section we aim to explore this pattern closely:  
+**More vegetation management expense → Better quality for consumers?**
+
+In previous pages, we already explored this trade-off through high level scatter plots:
+Once normalised by overhead, it's unclear that higher vegetation management expenses for EDBs typically lead to less interruptions (see Figure 1). One assumption one can make is the importance of the environment some EDBs operate in. A particularly challenging environment might naturally lead to both more expenses and more interruptions compared to peers, explaining the absence of overall observed pattern.
+
+<br>
+
+In order to understand and investigate the underlying pattern better, one can rephrase our underlying assumption as:  
+<br>
+**More vegetation management expense for a given EDB → Better quality for consumers down the line?**
+<br>
+It differs for 2 reasons:
+
+- Emphasis on the situation for a given EDB to acknowledge impossibility to differentiate a potential poor efficiency from a challenging environment. 
+- Possibility for the outcome to be observed down the line - in New Zealand EDBs tend to adopt 3 years vegetation management routine cycle. 
+
+### right {width=50%}
+```{r, echo=F}
+#| title: Figure 1
+
+my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="veg_saifi", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year, x_log_scale=F)
+
+```
+
+
+## section
+
+```{r, echo=F}
+dt_tmp <- data.table(dt)
+setorderv(dt_tmp, c("edb", "disc_yr"), order=-1)
+dt_tmp[, `:=`(veg_saifi_next1 = lag(veg_saifi, 1),
+              veg_saifi_next2 = lag(veg_saifi, 2), 
+              veg_saifi_next3 = lag(veg_saifi, 3), 
+              veg_saifi_next4 = lag(veg_saifi, 4)), by="edb"]
+# should we remove late years (missing anyway for lagged variables to compare more fairly?)
+# dt_tmp <- dt_tmp[disc_yr %in% sort(unique(dt$disc_yr))[1:(length(unique(dt$disc_yr))-4)]]
+setorderv(dt_tmp, c("edb", "disc_yr"), order=1)
+# dt_tmp[edb == "Aurora Energy"]
+
+ft_nm <- "veg_saifi"
+cor_res <- sapply(unique(dt_tmp$edb), function(edb_nm) cor(
+  dt_tmp[edb==edb_nm]$`veg_mgt_opex`/dt_tmp[edb==edb_nm]$`overhead_length`,
+  dt_tmp[edb==edb_nm][[ft_nm]], use = "pairwise.complete.obs"))
+dt_cor <- data.table(edb=names(cor_res), my_ft_nm=cor_res)
+setnames(dt_cor, "my_ft_nm", ft_nm)
+for (ft_nm in c("veg_saifi_next1", "veg_saifi_next2", "veg_saifi_next3", "veg_saifi_next4")) {
+  cor_res <- sapply(unique(dt_tmp$edb), function(edb_nm) cor(
+    dt_tmp[edb==edb_nm]$`veg_mgt_opex`/dt_tmp[edb==edb_nm]$`overhead_length`,
+    dt_tmp[edb==edb_nm][[ft_nm]], use = "pairwise.complete.obs"))
+  dt_cor_tmp <- data.table(edb=names(cor_res), my_ft_nm=cor_res)
+  setnames(dt_cor_tmp, "my_ft_nm", ft_nm)
+  dt_cor <- merge(dt_cor, dt_cor_tmp)
+  
+}
+
+
+```
+
+### chart {width=50%}
+
+```{r, echo=F}
+#| title: Figure 2 - Correlation between vegetation cost and outcomes
+
+dt_cor_long <- melt(dt_cor, id.vars = "edb", 
+                    variable.name = "measure", 
+                    value.name = "correlation")
+
+# Reverse the order of edb
+dt_cor_long$edb <- factor(dt_cor_long$edb, levels = rev(unique(dt_cor_long$edb)))
+# dt_cor_long <- dt_cor_long[!is.na(correlation)] # rm invercargill as always 0 veg_saifi
+
+
+ggplot(dt_cor_long, aes(measure, edb)) +
+  geom_tile(aes(fill = correlation)) +
+  geom_text(aes(label = round(correlation, 2))) +
+  theme_minimal() +
+  scale_fill_gradient2(low = "deepskyblue3", mid = "white", high = "brown2", midpoint = 0) + 
+  ggtitle("Correlation between vegetation cost and outcomes")
+
+```
+
+
+### text
+
+<h4>Simple Correlation Analysis</h4>
+
+<br> 
+
+**More vegetation management expense for a given EDB → Better quality for consumers down the line?**  
+
+<br>
+
+To explore this possibility, lagged signals have been created:  
+- `veg_saifi_next<n>` designates the saifi of the year observed `<n>` years after the expense was made (`<n>` can take values from 1 to 4 in this analysis).
+
+To clarify, for 2019 observations, it means that `veg_mgt_opex` represents the cost for the year 2019 and `veg_saifi_next2` represents the saifi caused by vegetation in 2021. Our data stopping in 2024, it means that `veg_saifi_next2` will only be filled until 2022 and compared to the expenses of that year, as outcomes after 2024 are not known yet. 
+
+For each EDB, we want to answer the following: Is a higher expense (than usual) tied to a better quality (than usual) down the line?  
+One simple way to attempt to observe such pattern is to compute the correlation, for each EDB, between the cost signal and the interruption signal;
+
+* A negative correlation (in blue) shows that more expenses are associated with less interruptions
+* A positive correlation (in red) shows that more expenses are associated with more interruptions
+
+<br>
+
+<h4>Disappointing results?</h4>
+
+<br> 
+
+Results are not as encouraging as one might expect. If such pattern (higher expense → better quality after n years) was consistently true for the industry for a given number of years n, we would expect to observe an entirely blue column.  
+It can be noted that n=1 and n=2 appears to be slightly more blue than other columns - yet 13 values out of 28 are positive - the expected pattern does not look consistent/significant.
+
+## section
+
+### latest year {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="veg_saifi", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year-1, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year-2, x_log_scale=F)
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year-3, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=latest_year-4, x_log_scale=F)
+
+```
+
+### 2016 {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="veg_saifi", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2016, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2016, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2016, x_log_scale=F)
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2016, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2016, x_log_scale=F)
+
+```
+
+## section 
+
+### 2019 {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="veg_saifi", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2019, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2019, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2019, x_log_scale=F)
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2019, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2019, x_log_scale=F)
+
+```
+
+### 2022 {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="veg_saifi", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2022, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2022, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2022, x_log_scale=F)
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2022, x_log_scale=F)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
+                 y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                 groupby="PAT_peergroup", plot_disc_yr=2022, x_log_scale=F)
+
+```
+
+# Causality Analysis [part 2]
+
+## section 
+
+### text
+
+<h5>Econometrics to the rescue?</h5>
+
+**More vegetation management expense for a given EDB → Better quality for consumers down the line?**  
+
+The above attempts 
+
