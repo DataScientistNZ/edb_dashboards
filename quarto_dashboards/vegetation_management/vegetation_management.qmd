@@ -1196,7 +1196,7 @@ display_model <- function(m) {
                           ifelse(p.value < 0.01, "**",
                                  ifelse(p.value < 0.05, "*", "")))]
   m_res <- m_res[, .(term, estimate, std.error, significance)]
-  
+  m_res[, term := gsub("^I\\((.*)\\)$", "\\1", term)]
   # # Compute model fit metrics
   # fit_metrics <- data.table(
   #   term = c("AIC", "BIC", "RMSE", "R²"),
@@ -1471,20 +1471,6 @@ results for models `ln(veg_mgt_opex) ~ ln(veg_saifi_next<n>) + ln(overhead_lengt
 * with fixed effects (for EDBs) on the right
 
 ## section
-
-```{r, echo=F}
-
-display_model <- function(m) {
-  m_res <- data.table(broom::tidy(m))
-  m_res[, significance := ifelse(p.value < 0.001, "***",
-                          ifelse(p.value < 0.01, "**",
-                                 ifelse(p.value < 0.05, "*", "")))]
-  m_res <- m_res[, .(term, estimate, std.error, significance)]
-  m_res[, term := gsub("^I\\((.*)\\)$", "\\1", term)]
-  my_datatable(m_res)
-}
-
-```
 
 ### left {.tabset}
 

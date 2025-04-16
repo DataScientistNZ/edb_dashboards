@@ -88,6 +88,6 @@ my_quarto_render(file.path(
   here::here(), "quarto_dashboards/vegetation_management/vegetation_management.qmd"))
 
 #######################
-create_index_qmd_file(quarto_folder, template_qmd, hosting_link)
-my_quarto_render(file.path(quarto_folder, "index.qmd"))
+# create_index_qmd_file(quarto_folder, template_qmd, hosting_link)
+# my_quarto_render(file.path(quarto_folder, "index.qmd"))
 
