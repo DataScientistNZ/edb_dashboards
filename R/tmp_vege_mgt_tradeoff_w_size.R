@@ -126,8 +126,13 @@ sapply(setdiff(unique(dt_plot$edb), "Electricity Invercargill"), function(edb_nm
   +   dt_plot[edb==edb_nm]$`veg_mgt_opex/overhead_length`,dt_plot[edb==edb_nm]$veg_saifi))
 
 
+source("R/00_inflation_data_helper.R")
+dt_r <- data.table(dt)
+dt_r <- merge(dt_r, get_inflation_real_factor("cpi", quarter=1, min_year=2013), by.x="disc_yr", by.y="year")
+dt_r[, veg_mgt_opex := veg_mgt_opex * cpi_real]
 
 dt_tmp <- data.table(dt)
+# dt_tmp <- data.table(dt_r)
 setorderv(dt_tmp, c("edb", "disc_yr"), order=-1)
 dt_tmp[, `:=`(veg_saifi_next1 = lag(veg_saifi, 1),
               veg_saifi_next2 = lag(veg_saifi, 2), 
@@ -167,7 +172,8 @@ ggplot(dt_cor_long, aes(measure, edb)) +
   geom_tile(aes(fill = correlation)) +
   geom_text(aes(label = round(correlation, 2))) +
   theme_minimal() +
-  scale_fill_gradient2(low = "deepskyblue3", mid = "white", high = "brown2", midpoint = 0)
+  scale_fill_gradient2(low = "deepskyblue3", mid = "white", high = "brown2", midpoint = 0) + 
+  ggtitle("Correlation between vegetation cost and outcomes")
 
 
 
@@ -202,7 +208,8 @@ summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next
                           veg_saifi_next2 != 0], 
             formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi_next2)) + edb"))
 
-summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
+summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & 
+                          (!is.na(veg_saifi_next2)) &
                           veg_saifi_next2 != 0], 
             formula="I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2) + edb"))
 
@@ -210,14 +217,40 @@ summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next
                           veg_saifi_next2 != 0], 
             formula="I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2)"))
 
-estimatr::lm_robust(as.formula("I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2) + edb"), 
-          data = dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
-                          veg_saifi_next2 != 0], se_type='HC0')
+m <- estimatr::lm_robust(as.formula("I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2) + edb"), 
+                         data = dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
+                                         veg_saifi_next2 != 0], se_type='HC0')
 
+summary(m)
+
+
+m
+
+estimatr::lm_robust(as.formula("I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2)"), 
+                    data = dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
+                                    veg_saifi_next2 != 0], se_type='HC0')
+my_reg_var <- "veg_saifi_next1"
+
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(", my_reg_var,") + I(log(overhead_length))")), 
+                         data = dt_tmp[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                         get(my_reg_var) != 0], se_type='HC0')
+
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,")")), 
+                         data = dt_tmp[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                          get(my_reg_var) != 0], se_type='HC0')
+
+m
 
 dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next1))]$veg_saifi_next1
 
+m_res <- data.table(broom::tidy(m))
+m_res[, stars := ifelse(p.value < 0.001, "***",
+                        ifelse(p.value < 0.01, "**",
+                               ifelse(p.value < 0.05, "*", "")))]
+m_res <- m_res[, .(term, estimate, std.error, stars)]
+# m_res <- m_res[!grepl("edb", term), .(term, estimate, std.error, stars)]
 
+m_res
 
 # 
 # ?scale_fill_gradient()

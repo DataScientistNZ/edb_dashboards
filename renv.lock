@@ -37,6 +37,17 @@
       ],
       "Hash": "64ff3427f559ce3f2597a4fe13255cb6"
     },
+    "Formula": {
+      "Package": "Formula",
+      "Version": "1.2-5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "stats"
+      ],
+      "Hash": "7a29697b75e027767a53fde6c903eca7"
+    },
     "MASS": {
       "Package": "MASS",
       "Version": "7.3-61",
@@ -99,6 +110,19 @@
         "utils"
       ],
       "Hash": "6b868847b365672d6c1677b1608da9ed"
+    },
+    "RcppEigen": {
+      "Package": "RcppEigen",
+      "Version": "0.3.4.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "stats",
+        "utils"
+      ],
+      "Hash": "4ac8e423216b8b70cb9653d1b3f71eb9"
     },
     "arrow": {
       "Package": "arrow",
@@ -190,12 +214,13 @@
     },
     "broom": {
       "Package": "broom",
-      "Version": "1.0.7",
+      "Version": "1.0.8",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "R",
         "backports",
+        "cli",
         "dplyr",
         "generics",
         "glue",
@@ -206,7 +231,7 @@
         "tibble",
         "tidyr"
       ],
-      "Hash": "8fcc818f3b9887aebaf206f141437cc9"
+      "Hash": "f6ceb00b6c485a472516d8d6a884b84d"
     },
     "bslib": {
       "Package": "bslib",
@@ -400,6 +425,22 @@
         "shiny"
       ],
       "Hash": "4247fd6acd3bdb4a481479f469956d2f"
+    },
+    "estimatr": {
+      "Package": "estimatr",
+      "Version": "1.0.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Formula",
+        "R",
+        "Rcpp",
+        "RcppEigen",
+        "generics",
+        "methods",
+        "rlang"
+      ],
+      "Hash": "7d744192d8c73a1c880ac81fc56b3d0d"
     },
     "evaluate": {
       "Package": "evaluate",

@@ -882,27 +882,32 @@ my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="ve
 ## section
 
 ```{r, echo=F}
-dt_tmp <- data.table(dt)
-setorderv(dt_tmp, c("edb", "disc_yr"), order=-1)
-dt_tmp[, `:=`(veg_saifi_next1 = lag(veg_saifi, 1),
+dt_lags <- data.table(dt)
+setorderv(dt_lags, c("edb", "disc_yr"), order=-1)
+dt_lags[, `:=`(veg_saifi_next1 = lag(veg_saifi, 1),
               veg_saifi_next2 = lag(veg_saifi, 2), 
               veg_saifi_next3 = lag(veg_saifi, 3), 
               veg_saifi_next4 = lag(veg_saifi, 4)), by="edb"]
 # should we remove late years (missing anyway for lagged variables to compare more fairly?)
-# dt_tmp <- dt_tmp[disc_yr %in% sort(unique(dt$disc_yr))[1:(length(unique(dt$disc_yr))-4)]]
-setorderv(dt_tmp, c("edb", "disc_yr"), order=1)
-# dt_tmp[edb == "Aurora Energy"]
+# dt_lags <- dt_lags[disc_yr %in% sort(unique(dt$disc_yr))[1:(length(unique(dt$disc_yr))-4)]]
+setorderv(dt_lags, c("edb", "disc_yr"), order=1)
+dt_lags[, `:=`(veg_mgt_opex_lag1 = lag(veg_mgt_opex, 1),
+              veg_mgt_opex_lag2 = lag(veg_mgt_opex, 2), 
+              veg_mgt_opex_lag3 = lag(veg_mgt_opex, 3), 
+              veg_mgt_opex_lag4 = lag(veg_mgt_opex, 4)), by="edb"]
+
+# dt_lags[edb == "Aurora Energy"]
 
 ft_nm <- "veg_saifi"
-cor_res <- sapply(unique(dt_tmp$edb), function(edb_nm) cor(
-  dt_tmp[edb==edb_nm]$`veg_mgt_opex`/dt_tmp[edb==edb_nm]$`overhead_length`,
-  dt_tmp[edb==edb_nm][[ft_nm]], use = "pairwise.complete.obs"))
+cor_res <- sapply(unique(dt_lags$edb), function(edb_nm) cor(
+  dt_lags[edb==edb_nm]$`veg_mgt_opex`/dt_lags[edb==edb_nm]$`overhead_length`,
+  dt_lags[edb==edb_nm][[ft_nm]], use = "pairwise.complete.obs"))
 dt_cor <- data.table(edb=names(cor_res), my_ft_nm=cor_res)
 setnames(dt_cor, "my_ft_nm", ft_nm)
 for (ft_nm in c("veg_saifi_next1", "veg_saifi_next2", "veg_saifi_next3", "veg_saifi_next4")) {
-  cor_res <- sapply(unique(dt_tmp$edb), function(edb_nm) cor(
-    dt_tmp[edb==edb_nm]$`veg_mgt_opex`/dt_tmp[edb==edb_nm]$`overhead_length`,
-    dt_tmp[edb==edb_nm][[ft_nm]], use = "pairwise.complete.obs"))
+  cor_res <- sapply(unique(dt_lags$edb), function(edb_nm) cor(
+    dt_lags[edb==edb_nm]$`veg_mgt_opex`/dt_lags[edb==edb_nm]$`overhead_length`,
+    dt_lags[edb==edb_nm][[ft_nm]], use = "pairwise.complete.obs"))
   dt_cor_tmp <- data.table(edb=names(cor_res), my_ft_nm=cor_res)
   setnames(dt_cor_tmp, "my_ft_nm", ft_nm)
   dt_cor <- merge(dt_cor, dt_cor_tmp)
@@ -952,7 +957,7 @@ To explore this possibility, lagged signals have been created:
 To clarify, for 2019 observations, it means that `veg_mgt_opex` represents the cost for the year 2019 and `veg_saifi_next2` represents the saifi caused by vegetation in 2021. Our data stopping in 2024, it means that `veg_saifi_next2` will only be filled until 2022 and compared to the expenses of that year, as outcomes after 2024 are not known yet. 
 
 For each EDB, we want to answer the following: Is a higher expense (than usual) tied to a better quality (than usual) down the line?  
-One simple way to attempt to observe such pattern is to compute the correlation, for each EDB, between the cost signal and the interruption signal;
+One simple way to attempt to observe such pattern is to compute the correlation, for each EDB, between the cost signal and the interruption signal. Such computations have been performed and are presented in Figure 2. One can observe:
 
 * A negative correlation (in blue) shows that more expenses are associated with less interruptions
 * A positive correlation (in red) shows that more expenses are associated with more interruptions
@@ -982,7 +987,7 @@ my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="ve
 ```{r, echo=F}
 #| title: veg_saifi_next1
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=latest_year-1, x_log_scale=F)
 
@@ -991,7 +996,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next2
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=latest_year-2, x_log_scale=F)
 ```
@@ -999,7 +1004,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next3
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=latest_year-3, x_log_scale=F)
 
@@ -1008,7 +1013,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next4
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=latest_year-4, x_log_scale=F)
 
@@ -1028,7 +1033,7 @@ my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="ve
 ```{r, echo=F}
 #| title: veg_saifi_next1
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2016, x_log_scale=F)
 
@@ -1037,7 +1042,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next2
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2016, x_log_scale=F)
 ```
@@ -1045,7 +1050,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next3
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2016, x_log_scale=F)
 
@@ -1054,7 +1059,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next4
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2016, x_log_scale=F)
 
@@ -1076,7 +1081,7 @@ my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="ve
 ```{r, echo=F}
 #| title: veg_saifi_next1
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2019, x_log_scale=F)
 
@@ -1085,7 +1090,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next2
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2019, x_log_scale=F)
 ```
@@ -1093,7 +1098,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next3
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2019, x_log_scale=F)
 
@@ -1102,7 +1107,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next4
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2019, x_log_scale=F)
 
@@ -1122,7 +1127,7 @@ my_scatter_gplot(data.table(dt)[veg_saifi == 0, veg_saifi := 0.001][], x_var="ve
 ```{r, echo=F}
 #| title: veg_saifi_next1
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.001][], x_var="veg_saifi_next1", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2022, x_log_scale=F)
 
@@ -1131,7 +1136,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next1 == 0, veg_saifi_next1 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next2
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.001][], x_var="veg_saifi_next2", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2022, x_log_scale=F)
 ```
@@ -1139,7 +1144,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next2 == 0, veg_saifi_next2 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next3
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.001][], x_var="veg_saifi_next3", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2022, x_log_scale=F)
 
@@ -1148,7 +1153,7 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next3 == 0, veg_saifi_next3 := 0.0
 ```{r, echo=F}
 #| title: veg_saifi_next4
 
-my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
+my_scatter_gplot(data.table(dt_lags)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.001][], x_var="veg_saifi_next4", 
                  y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
                  groupby="PAT_peergroup", plot_disc_yr=2022, x_log_scale=F)
 
@@ -1158,11 +1163,574 @@ my_scatter_gplot(data.table(dt_tmp)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.0
 
 ## section 
 
-### text
-
-<h5>Econometrics to the rescue?</h5>
+<h5>Econometrics</h5>
 
 **More vegetation management expense for a given EDB → Better quality for consumers down the line?**  
 
-The above attempts 
+The correlation analysis gives us a basic look at the relationship between vegetation management spending and interruptions, but it doesn’t tell the full story.
+
+To explore this further, we can use simple modelling techniques to help identify patterns and better understand how spending may impact reliability over time. While we can’t account for every possible factor, this approach allows us to examine whether higher investment in vegetation management is generally linked to fewer interruptions down the line.
+
+In the next sections, we apply basic statistical methods to refine our understanding and gain deeper insights into the data.
+
+## section
+
+<hr style="height: 5px; background-color: black; border: none;">
+
+## Section
+
+<h5>"Log normalised cost - log vegetation saifi" results</h5>
+
+results for models `ln(veg_mgt_opex/overhead_length) ~ ln(veg_saifi_next<n>) [+ edb]`
+
+* without fixed effects on the left
+* with fixed effects (for EDBs) on the right
+
+## section
+
+```{r, echo=F}
+
+display_model <- function(m) {
+  m_res <- data.table(broom::tidy(m))
+  m_res[, significance := ifelse(p.value < 0.001, "***",
+                          ifelse(p.value < 0.01, "**",
+                                 ifelse(p.value < 0.05, "*", "")))]
+  m_res <- m_res[, .(term, estimate, std.error, significance)]
+  
+  # # Compute model fit metrics
+  # fit_metrics <- data.table(
+  #   term = c("AIC", "BIC", "RMSE", "R²"),
+  #   estimate = c(AIC(m), BIC(m), rmse(m, dt_lags), summary(m)$r.squared)
+  # )
+  # 
+  # # Combine both tables
+  # final_res <- rbind(m_res, fit_metrics, fill = TRUE)
+  
+  # this does not play nicely with estimatr::lm_robust
+  # either we use robust estimate, or we use native computation of fit, not both....
+  
+  my_datatable(m_res)
+}
+
+```
+
+### left {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_reg_var <- "veg_saifi"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,"))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_reg_var <- "veg_saifi_next1"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,"))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_reg_var <- "veg_saifi_next2"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,"))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_reg_var <- "veg_saifi_next3"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,"))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_reg_var <- "veg_saifi_next4"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,"))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+### right {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_reg_var <- "veg_saifi"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,")) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_reg_var <- "veg_saifi_next1"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,")) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_reg_var <- "veg_saifi_next2"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,")) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_reg_var <- "veg_saifi_next3"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,")) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_reg_var <- "veg_saifi_next4"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(log(", my_reg_var,")) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+## section
+
+<hr style="height: 5px; background-color: black; border: none;">
+
+## Section
+
+<h5>"log vegetation saifi - Log normalised cost" results</h5>
+
+results for models `ln(veg_saifi) ~ ln(veg_mgt_opex_lag<n>/overhead_length)[+ edb]`
+
+* without fixed effects on the left
+* with fixed effects (for EDBs) on the right
+
+## section
+
+### left {.tabset}
+
+```{r, echo=F}
+#| title: veg_mgt_opex
+
+my_reg_var <- "veg_mgt_opex"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_mgt_opex_lag1
+
+my_reg_var <- "veg_mgt_opex_lag1"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0 & veg_saifi != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_mgt_opex_lag2
+
+my_reg_var <- "veg_mgt_opex_lag2"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0 & veg_saifi != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_mgt_opex_lag3
+
+my_reg_var <- "veg_mgt_opex_lag3"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0 & veg_saifi != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_mgt_opex_lag4
+
+my_reg_var <- "veg_mgt_opex_lag4"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0 & veg_saifi != 0], se_type='HC0')
+display_model(m)
+
+```
+
+### right {.tabset}
+
+```{r, echo=F}
+#| title: veg_mgt_opex
+
+my_reg_var <- "veg_mgt_opex"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_mgt_opex_lag1
+
+my_reg_var <- "veg_mgt_opex_lag1"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0 & veg_saifi != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_mgt_opex_lag2
+
+my_reg_var <- "veg_mgt_opex_lag2"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0 & veg_saifi != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_mgt_opex_lag3
+
+my_reg_var <- "veg_mgt_opex_lag3"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0 & veg_saifi != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_mgt_opex_lag4
+
+my_reg_var <- "veg_mgt_opex_lag4"
+m <- estimatr::lm_robust(as.formula(paste0("I(veg_saifi) ~ I(log(", my_reg_var,"/overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0 & veg_saifi != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+## Section
+
+<h5>"Log cost - log vegetation saifi" results</h5>
+
+results for models `ln(veg_mgt_opex) ~ ln(veg_saifi_next<n>) + ln(overhead_length) [+ edb]`
+
+* without fixed effects on the left
+* with fixed effects (for EDBs) on the right
+
+## section
+
+```{r, echo=F}
+
+display_model <- function(m) {
+  m_res <- data.table(broom::tidy(m))
+  m_res[, significance := ifelse(p.value < 0.001, "***",
+                          ifelse(p.value < 0.01, "**",
+                                 ifelse(p.value < 0.05, "*", "")))]
+  m_res <- m_res[, .(term, estimate, std.error, significance)]
+  m_res[, term := gsub("^I\\((.*)\\)$", "\\1", term)]
+  my_datatable(m_res)
+}
+
+```
+
+### left {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_reg_var <- "veg_saifi"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_reg_var <- "veg_saifi_next1"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_reg_var <- "veg_saifi_next2"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_reg_var <- "veg_saifi_next3"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_reg_var <- "veg_saifi_next4"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length))")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+### right {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_reg_var <- "veg_saifi"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_reg_var <- "veg_saifi_next1"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_reg_var <- "veg_saifi_next2"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_reg_var <- "veg_saifi_next3"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_reg_var <- "veg_saifi_next4"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex)) ~ I(log(", my_reg_var,")) + I(log(overhead_length)) + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+## section
+
+<hr style="height: 5px; background-color: black; border: none;">
+
+## section
+
+<h5>"Log normalised cost - vegetation saifi" results</h5>
+
+Results for models `ln(veg_mgt_opex/overhead_length) ~ veg_saifi_next<n> [+ edb]`
+
+* without fixed effects on the left
+* with fixed effects (for EDBs) on the right
+
+## section
+
+### left {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_reg_var <- "veg_saifi"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,")")), 
+                    data = dt_lags[veg_mgt_opex != 0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_reg_var <- "veg_saifi_next1"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,")")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_reg_var <- "veg_saifi_next2"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,")")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_reg_var <- "veg_saifi_next3"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,")")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_reg_var <- "veg_saifi_next4"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,")")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+### right {.tabset}
+
+```{r, echo=F}
+#| title: veg_saifi
+
+my_reg_var <- "veg_saifi"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,") + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_saifi_next1
+
+my_reg_var <- "veg_saifi_next1"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,") + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next2
+
+my_reg_var <- "veg_saifi_next2"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,") + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next3
+
+my_reg_var <- "veg_saifi_next3"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,") + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+```{r, echo=F}
+#| title: veg_saifi_next4
+
+my_reg_var <- "veg_saifi_next4"
+m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex/overhead_length)) ~ I(", my_reg_var,") + edb")), 
+                    data = dt_lags[veg_mgt_opex!=0 & (!is.na(get(my_reg_var))) &
+                                    get(my_reg_var) != 0], se_type='HC0')
+display_model(m)
+
+```
+
+
+
 
