@@ -1,7 +1,7 @@
 library(data.table)
 
 # load helper functions
-source("R/00_snowflake_helper.R")
+source(file.path(here::here(), "R", "00_snowflake_helper.R"))
 
 get_inflation_data <- function(inflation_label=NULL, quarter_filter=NULL, min_year=NULL) {
   

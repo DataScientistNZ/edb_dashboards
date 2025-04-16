@@ -125,6 +125,9 @@ sapply(unique(dt_plot$edb), function(edb_nm) cor(
 sapply(setdiff(unique(dt_plot$edb), "Electricity Invercargill"), function(edb_nm) cor(
   +   dt_plot[edb==edb_nm]$`veg_mgt_opex/overhead_length`,dt_plot[edb==edb_nm]$veg_saifi))
 
+merge(get_inflation_real_factor("lci_all", quarter=1, min_year=2013),
+      get_inflation_real_factor("ppi_all", quarter=1, min_year=2013)
+      )[, opex_escalator := 0.6 * lci_all_real + 0.4 * ppi_all_real][, c("year", "opex_escalator"), with=F]
 
 source("R/00_inflation_data_helper.R")
 dt_r <- data.table(dt)
@@ -225,6 +228,12 @@ summary(m)
 
 
 m
+
+
+m <- estimatr::lm_robust(as.formula("I(log(veg_saifi)) ~ I(log(veg_mgt_opex)) + I(log(overhead_length)) + I(log(line_lengh)) + I(log(nb_customers))"), 
+                         data = dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
+                                         veg_saifi_next2 != 0], se_type='HC0')
+
 
 estimatr::lm_robust(as.formula("I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2)"), 
                     data = dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
