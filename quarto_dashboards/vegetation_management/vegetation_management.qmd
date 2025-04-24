@@ -46,7 +46,7 @@ my_datatable <- function(dt, ..., digits=3) {
 
 ```
 
-# Introduction {scrolling="false"}
+# Intro {scrolling="false"}
 
 ```{r, echo=F}
 
@@ -173,7 +173,7 @@ The below presents results for `r latest_year` or for the full period (`r overal
 * nb_connections
 * icp50_line50
 
-Some expectations have been expressed that higher expenses in vegetation management are could bring a lower SAIFI due to vegetation. That's not what is empirically observed in the data, which seems to show, if anything, a positive correlation between vegetation management expenditure and interruptions caused by vegetation.
+Some expectations have been expressed that higher expenses in vegetation management could bring a lower SAIFI due to vegetation. That's not what is empirically observed in the data, which seems to show, if anything, a positive correlation between vegetation management expenditure and interruptions caused by vegetation.
 
 ## section
 
@@ -270,7 +270,7 @@ The below presents results for `r latest_year` or for the full period (`r overal
 * nb_connections
 * icp50_line50
 
-Some expectations have been expressed that higher expenses in vegetation management are could bring a lower SAIDI due to vegetation. That's not what is empirically observed in the data, which seems to show, if anything, a positive correlation between vegetation management expenditure and interruptions caused by vegetation.
+Some expectations have been expressed that higher expenses in vegetation management could bring a lower SAIDI due to vegetation. That's not what is empirically observed in the data, which seems to show, if anything, a positive correlation between vegetation management expenditure and interruptions caused by vegetation.
 
 ## section
 
@@ -351,6 +351,140 @@ my_scatter_gplot(data.table(dt)[veg_saidi < 1, veg_saidi := 1][], x_var="veg_sai
 my_scatter_gplot(data.table(dt)[veg_saidi < 1, veg_saidi := 1][], x_var="veg_saidi", 
                  y_numerator="veg_mgt_opex", y_denominator="icp50_line50", 
                  groupby="PAT_peergroup", plot_disc_yr=overall_period)
+
+```
+
+# vs emergencies opex
+
+## section
+<h5>Vegetation management opex vs Service interruptions and emergencies opex</h5>
+
+Some expectations have been expressed that higher expenses in vegetation management could bring a lower SAIDI due to vegetation and ultimately lower service interruptions and emergencies opex.  
+
+That sounds like wishful thinking. No clear patterns have been observed between vegetation management cost and quality, and the emergencies opex covers interruptions for any reason, not only vegetation. Vegetation being only ~12% of the identified cause for SAIFI, it's a bit hard to believe in the validity of insights linked to vegetation management one might find observing emergencies opex.
+
+The below presents results for `r latest_year` or for the full period (`r overall_period`) with a vegetation cost normalised using as denominator (note only one favoured option explored here):
+
+* overhead_length
+
+
+It presents results for emergencies cost normalised using as denominator:
+
+* overhead_length
+* line_length
+* nb_connections
+* icp50_line50
+
+
+```{r, echo=F}
+
+dt_tmp <- data.table(dt)[, `:=`(
+  "emergencies_opex / overhead_length" = emergencies_opex / overhead_length,
+  "emergencies_opex / line_length" = emergencies_opex / line_length,
+  "emergencies_opex / nb_connections" = emergencies_opex / nb_connections,
+  "emergencies_opex / icp50_line50" = emergencies_opex / icp50_line50)]
+
+dt_edb_avg_tmp <- data.table(dt_edb_avg)[, `:=`(
+  "emergencies_opex / overhead_length" = emergencies_opex / overhead_length,
+  "emergencies_opex / line_length" = emergencies_opex / line_length,
+  "emergencies_opex / nb_connections" = emergencies_opex / nb_connections,
+  "emergencies_opex / icp50_line50" = emergencies_opex / icp50_line50)]
+
+```
+
+## section
+
+### latest year {.tabset}
+
+
+```{r, echo=F}
+#| title: per overhead_length
+
+my_simple_scatter_gplot(dt_tmp[disc_yr==latest_year], x_var="emergencies_opex / overhead_length", 
+                        y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                        groupby="PAT_peergroup", title="", x_log_scale=F) +
+  labs(subtitle = latest_year)
+
+```
+
+
+```{r, echo=F}
+#| title: per line_length
+
+my_simple_scatter_gplot(dt_tmp[disc_yr==latest_year], x_var="emergencies_opex / line_length", 
+                        y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                        groupby="PAT_peergroup", title="", x_log_scale=F) +
+  labs(subtitle = latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_simple_scatter_gplot(dt_tmp[disc_yr==latest_year], x_var="emergencies_opex / nb_connections", 
+                        y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                        groupby="PAT_peergroup", title="", x_log_scale=F) +
+  labs(subtitle = latest_year)
+
+
+```
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_simple_scatter_gplot(dt_tmp[disc_yr==latest_year], x_var="emergencies_opex / icp50_line50", 
+                        y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                        groupby="PAT_peergroup", title="", x_log_scale=F) +
+  labs(subtitle = latest_year)
+
+
+```
+
+### overall period {.tabset}
+
+
+```{r, echo=F}
+#| title: per overhead_length
+
+my_simple_scatter_gplot(dt_edb_avg_tmp, x_var="emergencies_opex / overhead_length", 
+                        y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                        groupby="PAT_peergroup", title="", x_log_scale=F) +
+  labs(subtitle = overall_period)
+
+
+```
+
+
+```{r, echo=F}
+#| title: per line_length
+
+my_simple_scatter_gplot(dt_edb_avg_tmp, x_var="emergencies_opex / line_length", 
+                        y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                        groupby="PAT_peergroup", title="", x_log_scale=F) +
+  labs(subtitle = overall_period)
+
+```
+
+```{r, echo=F}
+#| title: per nb_connections
+
+my_simple_scatter_gplot(dt_edb_avg_tmp, x_var="emergencies_opex / nb_connections", 
+                        y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                        groupby="PAT_peergroup", title="", x_log_scale=F) +
+  labs(subtitle = overall_period)
+
+
+```
+
+```{r, echo=F}
+#| title: per icp50_line50
+
+my_simple_scatter_gplot(dt_edb_avg_tmp, x_var="emergencies_opex / icp50_line50", 
+                        y_numerator="veg_mgt_opex", y_denominator="overhead_length", 
+                        groupby="PAT_peergroup", title="", x_log_scale=F) +
+  labs(subtitle = overall_period)
+
 
 ```
 
@@ -839,7 +973,7 @@ my_datatable(dt_wide[, -"quadrant", with=F])
 ```
 
 
-# Causality Analysis [part 1]
+# Causality [part 1]
 
 ## section
 
@@ -1169,7 +1303,7 @@ my_scatter_gplot(data.table(dt_lags)[veg_saifi_next4 == 0, veg_saifi_next4 := 0.
 
 ```
 
-# Causality Analysis [part 2]
+# Causality [part 2]
 
 ## section 
 
@@ -2285,6 +2419,295 @@ m <- estimatr::lm_robust(as.formula(paste0("I(log(veg_mgt_opex_real/overhead_len
 display_model(m)
 
 ```
+
+# Perf stories
+
+## section
+
+This section highlights vegetation related cost and outcomes for:  
+
+* Orion NZ
+* Network Tasman
+* The whole EDB industry
+
+```{r, echo=F}
+
+dt_infl <- merge(get_inflation_real_factor("lci_all", quarter=1, min_year=2013),
+      get_inflation_real_factor("ppi_all", quarter=1, min_year=2013)
+      )[, opex_escalator := 0.6 * lci_all_real + 0.4 * ppi_all_real][, c("year", "opex_escalator"), with=F]
+dt_w_infl <- merge(dt, dt_infl, by.x="disc_yr", by.y="year")
+dt_w_infl[, veg_mgt_opex_real := veg_mgt_opex * opex_escalator]
+dt_w_infl[, emergencies_opex_real := emergencies_opex * opex_escalator]
+dt_w_infl[, veg_opex_share := veg_mgt_opex / opex]
+dt_w_infl[, "veg_mgt_opex_real / overhead_length" := veg_mgt_opex_real / overhead_length]
+
+```
+
+
+## section
+
+<hr style="height: 5px; background-color: black; border: none;">
+
+## section
+
+<h5>Orion NZ</h5>
+
+## section
+
+### left {.tabset}
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & veg_saifi
+
+my_edb <- "Orion NZ"
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_mgt_opex_real", "veg_saifi", y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+```
+
+```{r, echo=F}
+#| title: normalised veg_mag_opex_real & veg_saifi
+
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_mgt_opex_real / overhead_length", "veg_saifi",  
+                                y1_m_dollars=F, y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & veg_saidi
+
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_mgt_opex_real", "veg_saidi", y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+
+```
+
+### middle  {.tabset}
+
+```{r, echo=F}
+#| title: veg_opex_share & veg_saifi [lines]
+
+my_dual_axis_times_series_lines_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_opex_share", "veg_saifi", y1_m_dollars=F, y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+```
+
+```{r, echo=F}
+#| title: veg_opex_share & veg_saifi
+
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_opex_share", "veg_saifi", y1_m_dollars=F, y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+```
+
+### right  {.tabset}
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & emergencies_opex_real [bars]
+
+my_single_axis_bar_plot(dt_w_infl[edb == my_edb], x_var="disc_yr", y1_var="emergencies_opex_real", 
+                        y2_var="veg_mgt_opex_real") +
+  labs(subtitle = my_edb)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & emergencies_opex_real
+
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_mgt_opex_real", "emergencies_opex_real", y2_m_dollars=T) +
+  labs(subtitle = my_edb)
+
+```
+
+
+## section
+
+<hr style="height: 5px; background-color: black; border: none;">
+
+## section
+
+<h5>Network Tasman</h5>
+
+## section
+
+### left {.tabset}
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & veg_saifi
+
+my_edb <- "Network Tasman"
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_mgt_opex_real", "veg_saifi", y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+```
+
+```{r, echo=F}
+#| title: normalised veg_mag_opex_real & veg_saifi
+
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_mgt_opex_real / overhead_length", "veg_saifi", 
+                                y1_m_dollars=F, y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+```
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & veg_saidi
+
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_mgt_opex_real", "veg_saidi", y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+
+```
+
+### middle  {.tabset}
+
+```{r, echo=F}
+#| title: veg_opex_share & veg_saifi [lines]
+
+my_dual_axis_times_series_lines_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_opex_share", "veg_saifi", y1_m_dollars=F, y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+```
+
+```{r, echo=F}
+#| title: veg_opex_share & veg_saifi
+
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_opex_share", "veg_saifi", y1_m_dollars=F, y2_m_dollars=F) +
+  labs(subtitle = my_edb)
+
+```
+
+### right  {.tabset}
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & emergencies_opex_real - bars
+
+my_single_axis_bar_plot(dt_w_infl[edb == my_edb], x_var="disc_yr", y1_var="emergencies_opex_real", 
+                        y2_var="veg_mgt_opex_real") +
+  labs(subtitle = my_edb)
+
+```
+
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & emergencies_opex_real
+
+my_dual_axis_times_series_gplot(dt_w_infl[edb == my_edb], "disc_yr", 
+                                "veg_mgt_opex_real", "emergencies_opex_real", y2_m_dollars=T) +
+  labs(subtitle = my_edb)
+
+```
+
+
+## section
+
+<hr style="height: 5px; background-color: black; border: none;">
+
+## section
+
+<h5>All EDBs</h5>
+
+## section
+
+### left {.tabset}
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & veg_saifi
+
+dt_w_infl_all <- dt_w_infl[, .(veg_mgt_opex_real = sum(veg_mgt_opex_real),
+                               emergencies_opex_real = sum(emergencies_opex_real),
+                               veg_mgt_opex = sum(veg_mgt_opex),
+                               overhead_length = sum(overhead_length),
+                               opex = sum(opex),
+                               veg_saifi = weighted.mean(veg_saifi, nb_connections),
+                               veg_saidi = weighted.mean(veg_saidi, nb_connections)), 
+                           by=c("disc_yr")]
+dt_w_infl_all[, veg_opex_share := veg_mgt_opex / opex]
+dt_w_infl_all[, "veg_mgt_opex_real / overhead_length" := veg_mgt_opex_real / overhead_length]
+
+my_dual_axis_times_series_gplot(dt_w_infl_all, "disc_yr", 
+                                "veg_mgt_opex_real", "veg_saifi", y2_m_dollars=F) +
+  labs(subtitle = "All EDBs")
+
+```
+
+```{r, echo=F}
+#| title: normalised veg_mag_opex_real & veg_saifi
+
+my_dual_axis_times_series_gplot(dt_w_infl_all, "disc_yr", 
+                                "veg_mgt_opex_real / overhead_length", "veg_saifi",  
+                                y1_m_dollars=F, y2_m_dollars=F) +
+  labs(subtitle = "All EDBs")
+
+```
+
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & veg_saidi
+
+my_dual_axis_times_series_gplot(dt_w_infl_all, "disc_yr", 
+                                "veg_mgt_opex_real", "veg_saidi", y2_m_dollars=F) +
+  labs(subtitle = "All EDBs")
+
+
+```
+
+### middle  {.tabset}
+
+```{r, echo=F}
+#| title: veg_opex_share & veg_saifi [lines]
+
+my_dual_axis_times_series_lines_gplot(dt_w_infl_all, "disc_yr", 
+                                "veg_opex_share", "veg_saifi", y1_m_dollars=F, y2_m_dollars=F) +
+  labs(subtitle = "All EDBs")
+
+```
+
+```{r, echo=F}
+#| title: veg_opex_share & veg_saifi
+
+my_dual_axis_times_series_gplot(dt_w_infl_all, "disc_yr", 
+                                "veg_opex_share", "veg_saifi", y1_m_dollars=F, y2_m_dollars=F) +
+  labs(subtitle = "All EDBs")
+
+```
+
+### right  {.tabset}
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & emergencies_opex_real - bars
+
+my_single_axis_bar_plot(dt_w_infl_all, x_var="disc_yr", y1_var="emergencies_opex_real", 
+                        y2_var="veg_mgt_opex_real") +
+  labs(subtitle = "All EDBs")
+
+```
+
+
+```{r, echo=F}
+#| title: veg_mag_opex_real & emergencies_opex_real
+
+my_dual_axis_times_series_gplot(dt_w_infl_all, "disc_yr", 
+                                "veg_mgt_opex_real", "emergencies_opex_real", y2_m_dollars=T) +
+  labs(subtitle = "All EDBs")
+
+```
+
+
 
 
 

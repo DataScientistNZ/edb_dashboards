@@ -33,7 +33,6 @@ dt_opex[, opex := value * 1000]
 dt_opex <- dt_opex[, c("disc_yr", "edb", "opex"), with=F]
 stopifnot(nrow(dt_opex) == length(all_years) * 29)
 
-
 # extract total capex
 dt_capex <- dt[schedule == "SCHEDULE 6a: REPORT ON CAPITAL EXPENDITURE FOR THE DISCLOSURE YEAR" & 
                  category == "Capital expenditure" & 
@@ -42,7 +41,7 @@ dt_capex[, capex := value * 1000]
 dt_capex <- dt_capex[, c("disc_yr", "edb", "capex"), with=F]
 stopifnot(nrow(dt_capex) == length(all_years) * 29)
 
-
+# extract total revenues
 dt_revenue <- dt[schedule == "SCHEDULE 3: REPORT ON REGULATORY PROFIT" &
                    category == "Total regulatory income" & description == "Total regulatory income"]
 dt_revenue[, revenue := value * 1000]
@@ -56,14 +55,12 @@ dt_rab[, rab_open := value * 1000]
 dt_rab <- dt_rab[, c("disc_yr", "edb", "rab_open"), with=F]
 stopifnot(nrow(dt_rab) == length(all_years) * 29)
 
-
 # extract depreciation
 dt_deprec <- dt[schedule == "SCHEDULE 4: REPORT ON VALUE OF THE REGULATORY ASSET BASE (ROLLED FORWARD)" & 
                category == "Total depreciation" & sub_category == "RAB"]
 dt_deprec[, deprec := value * 1000]
 dt_deprec <- dt_deprec[, c("disc_yr", "edb", "deprec"), with=F]
 stopifnot(nrow(dt_deprec) == length(all_years) * 29)
-
 
 # extract line length
 dt_line_length <- dt[schedule == "SCHEDULE 9c: REPORT ON OVERHEAD LINES AND UNDERGROUND CABLES" & 
@@ -130,7 +127,6 @@ dt_veg_saifi[is.na(veg_saifi), veg_saifi := 0]
 dt_veg_saifi <- dt_veg_saifi[, c("disc_yr", "edb", "veg_saifi"), with=F]
 stopifnot(nrow(dt_veg_saifi) == length(all_years) * 29)
 
-
 # extract opex - vegetation management
 dt_veg_mgt_opex <- dt[schedule == "SCHEDULE 6b: REPORT ON OPERATIONAL EXPENDITURE FOR THE DISCLOSURE YEAR" &
                          description == "Vegetation management"]
@@ -141,11 +137,11 @@ dt_veg_mgt_opex[is.na(veg_mgt_opex), veg_mgt_opex := 0]
 stopifnot(nrow(dt_veg_mgt_opex) == length(all_years) * 29)
 
 # extract opex - Service interruptions and emergencies
-dt_outages_opex <- dt[schedule == "SCHEDULE 6b: REPORT ON OPERATIONAL EXPENDITURE FOR THE DISCLOSURE YEAR" & 
+dt_emergencies_opex <- dt[schedule == "SCHEDULE 6b: REPORT ON OPERATIONAL EXPENDITURE FOR THE DISCLOSURE YEAR" & 
                               description == "Service interruptions and emergencies"]
-dt_outages_opex[, outages_opex := value * 1000]
-dt_outages_opex <- dt_outages_opex[, c("disc_yr", "edb", "outages_opex"), with=F]
-stopifnot(nrow(dt_outages_opex) == length(all_years) * 29)
+dt_emergencies_opex[, emergencies_opex := value * 1000]
+dt_emergencies_opex <- dt_emergencies_opex[, c("disc_yr", "edb", "emergencies_opex"), with=F]
+stopifnot(nrow(dt_emergencies_opex) == length(all_years) * 29)
 
 ###################################################################################
 
@@ -161,7 +157,7 @@ dt_all <- merge(setorderv(unique(dt[, c("disc_yr", "edb"), with=F]), c("disc_yr"
 # below: merge all data together - perform basic check when adding one info
 dt_list <- list(dt_opex, dt_capex, dt_revenue, dt_rab, dt_deprec, dt_nb_connections, dt_line_length, 
                 dt_overhead_length,  dt_unplanned_saidi, dt_norm_saidi, dt_veg_saidi, dt_veg_saifi, 
-                dt_veg_mgt_opex, dt_outages_opex)
+                dt_veg_mgt_opex, dt_emergencies_opex)
 for (i in 1:length(dt_list)) {
   expected_nrow <- nrow(dt_all)
   dt_all <- merge(dt_all, dt_list[[i]], by = c("disc_yr", "edb"))
