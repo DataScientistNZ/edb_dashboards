@@ -1,0 +1,159 @@
+---
+title: "My document"
+format:
+  html:
+    toc: true
+    embed-resources: true
+    html-math-method: katex
+    css: styles.css
+---
+
+
+``` {r}
+#| echo: false
+
+# Load required libraries
+library(data.table)
+library(echarts4r)
+
+# Convert mtcars to a data.table
+mtcars_dt <- as.data.table(mtcars, keep.rownames = "car")
+
+```
+      
+# My title
+      
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus elementum fringilla diam, nec consequat mauris cursus ut. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Quisque vehicula ultricies massa, eu rhoncus augue volutpat eget. Nullam varius ultricies turpis vel dictum. In tincidunt lobortis sapien, sit amet volutpat neque efficitur in.
+
+Suspendisse potenti. Phasellus condimentum mi id arcu accumsan, in dapibus metus tincidunt. Nunc sodales nulla non enim dapibus, non aliquet mauris elementum. Praesent vestibulum eu lacus eu fermentum. Etiam eget turpis a augue tincidunt pharetra. Mauris non tellus et lectus gravida tempor in id erat. Sed gravida orci nec justo tincidunt interdum. Quisque accumsan scelerisque nisi at sagittis. Nullam fringilla sapien sit amet libero laoreet vulputate. Duis pretium lectus nec ex dapibus, et egestas risus pellentesque.
+
+Curabitur et arcu risus. Nunc malesuada mi ut diam gravida, vel tincidunt turpis ultricies. Aenean pellentesque libero vel massa facilisis tincidunt. Nulla vel diam sed magna fermentum aliquam. Fusce a ante enim. Praesent lacinia varius lacus, sed pretium est laoreet ut. Nulla facilisi. Etiam vestibulum sapien eget mi pellentesque, vel venenatis elit auctor. Maecenas nec porttitor lectus. Vestibulum efficitur, metus in vehicula bibendum, risus quam mollis lacus, eu finibus enim justo ut risus. Cras non lobortis felis, ut scelerisque ex. Vivamus vehicula, risus ut tristique posuere, sapien neque ornare ante, at rhoncus ipsum lorem at ipsum.
+
+
+## Section 1
+
+### Sub-Section 1
+
+Morbi eu sapien ac elit venenatis bibendum. Integer sit amet dui at orci suscipit convallis. Sed congue nisl vitae libero tincidunt venenatis. Mauris tempor justo ex, at aliquet orci lacinia sed. Aliquam sed nunc vel nisl cursus dignissim. Nulla facilisi. Quisque convallis eu elit eu fermentum. Duis elementum risus vitae sodales aliquam. Praesent pulvinar sapien et justo egestas gravida.
+
+``` {r}
+#| echo: false
+
+# Bar Chart: Average Miles Per Gallon (mpg) by Cylinder (cyl)
+mtcars_dt[, .(avg_mpg = mean(mpg)), by = cyl] |>
+  e_charts(cyl) |>
+  e_bar(avg_mpg, name = "Avg MPG") |>
+  e_title("Average MPG by Cylinder") |>
+  e_tooltip(trigger = "axis") |>
+  e_x_axis(name = "Cylinders") |>
+  e_y_axis(name = "Average MPG") |>
+  e_theme("westeros")
+
+```
+
+Donec sit amet sagittis lectus. Suspendisse sodales nisl vel nisi egestas, at ultrices nunc tempus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nam aliquet, lacus at efficitur scelerisque, nisi lorem auctor sem, non fermentum ex tortor vel turpis. Duis sed lobortis nisi. Aliquam malesuada felis id ex auctor mollis. Suspendisse euismod fermentum urna quis eleifend. Vestibulum vestibulum feugiat erat id iaculis. Suspendisse potenti.
+
+### Sub-Section 2
+
+Ut facilisis eu mauris id consectetur. Duis venenatis massa vel porttitor scelerisque. Curabitur auctor risus in ante feugiat pharetra. In hac habitasse platea dictumst. Fusce interdum eros a metus scelerisque, et suscipit dolor aliquet. Proin fringilla urna sit amet blandit vehicula. Suspendisse potenti.
+
+``` {r}
+#| echo: false
+
+# Scatter Plot: Horsepower vs Weight
+mtcars_dt |>
+  e_charts(wt) |>
+  e_scatter(hp, name = "Cars") |>
+  e_title("Horsepower vs Weight") |>
+  e_tooltip(trigger = "item") |>
+  e_x_axis(name = "Weight (1000 lbs)") |>
+  e_y_axis(name = "Horsepower") |>
+  e_theme("dark")
+
+```
+
+Aenean vel massa vehicula, pretium orci eu, fermentum velit. Nam accumsan mi sed est hendrerit, vitae ultricies est congue. Fusce eget lacus sed justo fringilla tincidunt nec a enim. Suspendisse sit amet ligula nec ligula sodales fringilla quis non magna. Donec nec vehicula velit. Cras vel pharetra orci. Aenean porttitor ultricies felis, id fringilla nisi porttitor vel. Sed nec elit sodales, rhoncus velit at, blandit nulla. Quisque scelerisque urna ac convallis vestibulum. Vivamus mollis nisl vel mi sagittis faucibus.
+
+## section 2
+
+Ut ac nibh eu lorem dapibus varius. Suspendisse fermentum orci in turpis venenatis luctus. Vivamus dapibus metus nisi, quis efficitur erat viverra quis. Vestibulum vel justo eget ligula euismod aliquet. Suspendisse potenti. Curabitur ultrices nisi neque, nec feugiat massa tristique quis. Nunc placerat risus nec dignissim vulputate. Integer a ex quis justo efficitur volutpat.
+
+``` {r}
+#| echo: false
+
+# Line Chart: MPG by Car Index
+mtcars_dt[, index := .I] # Add an index column for ordering
+mtcars_dt |>
+  e_charts(index) |>
+  e_line(mpg, name = "MPG") |>
+  e_title("Miles Per Gallon by Car Index") |>
+  e_tooltip(trigger = "axis") |>
+  e_x_axis(name = "Car Index") |>
+  e_y_axis(name = "MPG") |>
+  e_theme("macarons")
+```
+
+Nam vehicula felis vel arcu ultrices, a consequat orci rutrum. Proin tincidunt, turpis sit amet pharetra consequat, nisl libero vulputate metus, at ultrices nulla urna et eros. Integer euismod volutpat nulla quis aliquet. Morbi pharetra tristique sagittis. Cras pharetra sollicitudin lacus eget sollicitudin. Etiam porttitor fringilla sapien, ut feugiat arcu eleifend at. Praesent at consequat quam. Fusce malesuada mi a sem tincidunt bibendum.
+
+Maecenas euismod lacus eros, a viverra nisl pharetra ac. Proin aliquet arcu sed scelerisque convallis. Nullam vitae eros nisi. Nulla eu nibh ante. Suspendisse hendrerit ultrices sapien, vel feugiat risus gravida nec. Integer pulvinar gravida orci et consectetur. Pellentesque pharetra bibendum magna, ac tincidunt turpis laoreet id. Curabitur auctor tempor odio quis dignissim. Vivamus blandit nulla eget nisl interdum, nec ultricies magna laoreet.
+
+## Tab explore
+
+### All charts with tabs
+
+::: {.panel-tabset}
+## Chart1
+
+``` {r}
+#| echo: false
+
+# Bar Chart: Average Miles Per Gallon (mpg) by Cylinder (cyl)
+mtcars_dt[, .(avg_mpg = mean(mpg)), by = cyl] |>
+  e_charts(cyl) |>
+  e_bar(avg_mpg, name = "Avg MPG") |>
+  e_title("Average MPG by Cylinder") |>
+  e_tooltip(trigger = "axis") |>
+  e_x_axis(name = "Cylinders") |>
+  e_y_axis(name = "Average MPG") |>
+  e_theme("westeros")
+
+```
+
+## Chart2
+
+``` {r}
+#| echo: false
+
+# Scatter Plot: Horsepower vs Weight
+mtcars_dt |>
+  e_charts(wt) |>
+  e_scatter(hp, name = "Cars") |>
+  e_title("Horsepower vs Weight") |>
+  e_tooltip(trigger = "item") |>
+  e_x_axis(name = "Weight (1000 lbs)") |>
+  e_y_axis(name = "Horsepower") |>
+  e_theme("dark")
+
+```
+
+## Chart3
+
+``` {r}
+#| echo: false
+
+# Line Chart: MPG by Car Index
+mtcars_dt[, index := .I] # Add an index column for ordering
+mtcars_dt |>
+  e_charts(index) |>
+  e_line(mpg, name = "MPG") |>
+  e_title("Miles Per Gallon by Car Index") |>
+  e_tooltip(trigger = "axis") |>
+  e_x_axis(name = "Car Index") |>
+  e_y_axis(name = "MPG") |>
+  e_theme("macarons")
+```
+:::
+    
+### Other content
+
+In pharetra orci eget justo egestas ultrices. Nulla eget leo congue, laoreet arcu sit amet, gravida nunc. Donec viverra mi magna, vel pharetra eros rhoncus ut. Phasellus sagittis dictum dolor, id cursus est vehicula non. Suspendisse potenti. Integer at condimentum erat, eu pulvinar purus. Fusce a odio ornare, fermentum libero et, laoreet velit. Curabitur fringilla luctus nisi sed cursus. Sed pretium lorem euismod, tincidunt ex quis, suscipit nunc.

@@ -199,7 +199,7 @@ dt[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi))]
 dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi))]
 
 summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0], 
-            formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi)) + edb"))
+            formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi * nb_connections)) + edb"))
 summary(glm(data=dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & !is.na(veg_saifi_next1)], 
             formula="I(log(veg_mgt_opex/overhead_length)) ~ I(log(veg_saifi_next1)) + edb"))
 
@@ -230,9 +230,8 @@ summary(m)
 m
 
 
-m <- estimatr::lm_robust(as.formula("I(log(veg_saifi)) ~ I(log(veg_mgt_opex)) + I(log(overhead_length)) + I(log(line_lengh)) + I(log(nb_customers))"), 
-                         data = dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0 & (!is.na(veg_saifi_next2)) &
-                                         veg_saifi_next2 != 0], se_type='HC0')
+estimatr::lm_robust(as.formula("I(log(veg_saifi)) ~ I(log(veg_mgt_opex/overhead_length)) + I(log(nb_connections/line_length))"), 
+                         data = dt_tmp[veg_mgt_opex!=0 & veg_saifi !=0], se_type='HC0')
 
 
 estimatr::lm_robust(as.formula("I(log(veg_mgt_opex/overhead_length)) ~ I(veg_saifi_next2)"), 
