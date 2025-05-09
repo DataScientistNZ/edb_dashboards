@@ -91,7 +91,7 @@ my_bar_gplot(dt, y_numerator="veg_mgt_opex_w_saifi_cost_2", y_denominator="overh
 
 #############################################################
 
-price_mn_outage_2 <- 0.44
+price_mn_outage_2 <- 0.15
 dt[, cost_outages_via_saifi_1 := veg_saifi * nb_connections * price_mn_outage_1 * overall_mn_per_outage]
 dt[, cost_outages_via_saifi_2 := veg_saifi * nb_connections * price_mn_outage_2 * overall_mn_per_outage]
 dt[, norm_cost_outages_via_saifi_1 := veg_saifi * nb_connections * price_mn_outage_1 * overall_mn_per_outage / overhead_length]
@@ -138,6 +138,23 @@ ggplot(dt_long[desc %in% display_var & PAT_peergroup == my_group & disc_yr == my
   theme_minimal() +
   theme(legend.position = "bottom")
 
+dt_avg <- dt_long[, .(norm_value = mean(norm_value)), by=c("edb","PAT_peergroup", "desc")]
+ggplot(dt_avg[desc %in% display_var & PAT_peergroup == my_group], 
+       aes(x = edb, y = norm_value, fill = desc)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # Reverse the axes
+  labs(title = "",
+       y = " $ / km of overhead",
+       x = "",
+       fill = "",
+       subtitle = paste0(my_group, "  -  ", my_disc_yr)) +
+  scale_fill_manual(values = c("brown2", "cyan4"), 
+                    labels = c("veg_mgt_opex" = "normalised veg. mgt expense",
+                               "cost_outages_via_saifi_2" = "normalised cost outages (26$ per outage)")) +
+  ggtitle("Normalised vegetation management cost benchmark") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
 
 dt_long[desc %in% display_var & PAT_peergroup == my_group & disc_yr == my_disc_yr]
 
@@ -145,7 +162,7 @@ dt_long[desc %in% display_var & PAT_peergroup == my_group & disc_yr == my_disc_y
 
 my_group <- unique(dt$PAT_peergroup)[4]
 display_var <- c("veg_mgt_opex", "cost_outages_via_saidi_2")
-my_disc_yr <- 2024
+my_disc_yr <- 2023
 
 names(display_var) <- c("normalised veg. mgt cost", "quality penalty")
 
@@ -163,6 +180,7 @@ dt_long[, norm_value := value / overhead_length]
 
 dt_long[, desc := factor(desc, levels = c(display_var[2], display_var[1]))]
 
+
 ggplot(dt_long[desc %in% display_var & PAT_peergroup == my_group & disc_yr == my_disc_yr], 
        aes(x = edb, y = norm_value, fill = desc)) +
   geom_bar(stat = "identity") +
@@ -179,7 +197,22 @@ ggplot(dt_long[desc %in% display_var & PAT_peergroup == my_group & disc_yr == my
   theme_minimal() +
   theme(legend.position = "bottom")
 
-
+dt_avg <- dt_long[, .(norm_value = mean(norm_value)), by=c("edb","PAT_peergroup", "desc")]
+ggplot(dt_avg[desc %in% display_var & PAT_peergroup == my_group], 
+       aes(x = edb, y = norm_value, fill = desc)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # Reverse the axes
+  labs(title = "",
+       y = " $ / km of overhead",
+       x = "",
+       fill = "",
+       subtitle = paste0(my_group, "  -  ", "[2013-2023]")) +
+  scale_fill_manual(values = c("brown2", "cyan4"), 
+                    labels = c("veg_mgt_opex" = "normalised veg. mgt expense",
+                               "cost_outages_via_saidi_2" = "normalised cost outages (0.15$ per mn)")) +
+  ggtitle("Normalised vegetation management cost benchmark") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
 
 
 
